@@ -41,7 +41,6 @@ public class Registro {
     }
 
     public void setObservacoes(String observacoes) {
-        // Observacoes sao opcionais.
         this.observacoes = observacoes == null ? "" : observacoes.trim();
     }
 }
