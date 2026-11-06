@@ -350,6 +350,19 @@ public class MedicoFactory {
 ```
  
 ### 3.4 Services (o que a view enxerga)
+
+Na issue #6, `PacienteNaoEncontradoException` fica definida para ser lançada
+por `PacienteService.buscarPorCpf` quando a busca não encontrar o CPF, com a
+mensagem `Paciente não encontrado para o CPF: <cpf>`. A implementação do service
+deverá seguir esse contrato; a view deverá capturar a exceção e exibir a mensagem.
+
+`Paciente.setConvenio` e o construtor com convênio lançam
+`ConvenioInvalidoException` para texto vazio ou nome fora de `CONVENIOS_ACEITOS`.
+A lista inicial contém `Unimed`, conforme o exemplo existente, e deve ser ajustada
+quando a equipe definir outros convênios. Espaços nas pontas e diferenças entre
+maiúsculas e minúsculas são aceitos. `null` representa atendimento particular.
+Quem usar o construtor com convênio ou o setter deve tratar a exceção com
+`try/catch` ou declará-la com `throws`.
  
 ```java
 public class PacienteService {

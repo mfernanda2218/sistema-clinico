@@ -1,16 +1,20 @@
 package clinica.model;
 
+import clinica.exception.ConvenioInvalidoException;
+import java.util.List;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 public class Paciente extends Pessoa {
 
+    private static final List<String> CONVENIOS_ACEITOS = List.of("Unimed");
+
     private LocalDate dataNascimento;
-    private String convenio; // null ou vazio = particular
+    private String convenio; // null = particular
 
     // Construtor COM convênio
     public Paciente(String nome, String cpf, String telefone,
-                    LocalDate dataNascimento, String convenio) {
+                    LocalDate dataNascimento, String convenio) throws ConvenioInvalidoException {
         super(nome, cpf, telefone);
         setDataNascimento(dataNascimento);
         setConvenio(convenio);
@@ -19,7 +23,9 @@ public class Paciente extends Pessoa {
     // Construtor SEM convênio (particular)
     public Paciente(String nome, String cpf, String telefone,
                     LocalDate dataNascimento) {
-        this(nome, cpf, telefone, dataNascimento, null);
+        super(nome, cpf, telefone);
+        setDataNascimento(dataNascimento);
+        this.convenio = null;
     }
 
     // Getters
@@ -32,7 +38,7 @@ public class Paciente extends Pessoa {
     }
 
     public boolean isParticular() {
-        return convenio == null || convenio.isBlank();
+        return convenio == null;
     }
 
     // Setters
@@ -46,13 +52,23 @@ public class Paciente extends Pessoa {
         this.dataNascimento = dataNascimento;
     }
 
-    public void setConvenio(String convenio) {
-        // Permite null ou vazio (particular)
-        if (convenio != null && convenio.isBlank()) {
+    public void setConvenio(String convenio) throws ConvenioInvalidoException {
+        if (convenio == null) {
             this.convenio = null;
-        } else {
-            this.convenio = convenio;
+            return;
         }
+        if (convenio.isBlank()) {
+            throw new ConvenioInvalidoException("Convenio nao pode ser vazio. Use null para particular.");
+        }
+        String nomeConvenio = convenio.trim();
+        for (String aceito : CONVENIOS_ACEITOS) {
+            if (aceito.equalsIgnoreCase(nomeConvenio)) {
+                this.convenio = aceito;
+                return;
+            }
+        }
+        throw new ConvenioInvalidoException("Convenio nao aceito: " + nomeConvenio
+                + ". Convenios aceitos: " + CONVENIOS_ACEITOS);
     }
 
     // Polimorfismo
