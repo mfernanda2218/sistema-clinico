@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter;
 public class Paciente extends Pessoa {
 
     private LocalDate dataNascimento;
+    private final Prontuario prontuario;
     private String convenio; // null ou vazio = particular
 
     // Construtor COM convênio
@@ -14,6 +15,7 @@ public class Paciente extends Pessoa {
         super(nome, cpf, telefone);
         setDataNascimento(dataNascimento);
         setConvenio(convenio);
+        this.prontuario = new Prontuario();
     }
 
     // Construtor SEM convênio (particular)
@@ -25,6 +27,10 @@ public class Paciente extends Pessoa {
     // Getters
     public LocalDate getDataNascimento() {
         return dataNascimento;
+    }
+
+    public Prontuario getProntuario() {
+        return prontuario;
     }
 
     public String getConvenio() {
