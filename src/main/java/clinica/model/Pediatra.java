@@ -14,6 +14,6 @@ public class Pediatra extends Medico {
 
 	@Override
 	public double getValorConsulta() {
-		return valorConsulta;
+		return 200.0;
 	}
 }

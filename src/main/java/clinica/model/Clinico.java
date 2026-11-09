@@ -14,6 +14,6 @@ public class Clinico extends Medico {
 
 	@Override
 	public double getValorConsulta() {
-		return valorConsulta; 
+		return 150.0;
 	}
 }

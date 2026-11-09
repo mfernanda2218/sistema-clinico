@@ -14,9 +14,9 @@ public class Cardiologista extends Medico{
 
 	@Override
 	public double getValorConsulta() {
-		return getValorConsulta();
+		return 300.0;
 	}
-	
-	
+
+
 
 }
