@@ -1,6 +1,7 @@
 package clinica.model;
 
 import clinica.interfaces.Cobravel;
+import clinica.exception.HorarioIndisponivelException;
 import clinica.interfaces.EstrategiaPreco;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -18,12 +19,12 @@ public class Consulta implements Cobravel {
     private transient EstrategiaPreco estrategia;
 
     public Consulta(Paciente paciente, Medico medico, LocalDateTime dataHora,
-                    String tipo, double valorBase) {
+                    String tipo, double valorBase) throws HorarioIndisponivelException {
         this(paciente, medico, dataHora, tipo, valorBase, new PrecoParticular());
     }
 
     public Consulta(Paciente paciente, Medico medico, LocalDateTime dataHora,
-                    String tipo, double valorBase, EstrategiaPreco estrategia) {
+                    String tipo, double valorBase, EstrategiaPreco estrategia) throws HorarioIndisponivelException {
         this.id = UUID.randomUUID().toString();
         setPaciente(paciente);
         setMedico(medico);
@@ -80,7 +81,7 @@ public class Consulta implements Cobravel {
         return dataHora;
     }
 
-    public void setDataHora(LocalDateTime dataHora) {
+    public void setDataHora(LocalDateTime dataHora) throws HorarioIndisponivelException {
         if (dataHora == null || !dataHora.isAfter(LocalDateTime.now())) {
             throw new IllegalArgumentException("Data e hora devem estar no futuro.");
         }

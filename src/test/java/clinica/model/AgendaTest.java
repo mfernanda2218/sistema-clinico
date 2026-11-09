@@ -1,6 +1,7 @@
 package clinica.model;
 
 import com.google.gson.Gson;
+import clinica.exception.HorarioIndisponivelException;
 import org.junit.Before;
 import org.junit.Test;
 import java.time.LocalDate;
@@ -29,7 +30,7 @@ public class AgendaTest {
     }
 
     @Test
-    public void remarcaReserva() {
+    public void remarcaReserva() throws Exception {
         LocalDateTime novoHorario = horario.plusHours(1);
         consulta.setDataHora(novoHorario);
         assertTrue(medico.estaDisponivel(horario));
@@ -40,11 +41,11 @@ public class AgendaTest {
     }
 
     @Test
-    public void preservaReservaQuandoHaConflito() {
+    public void preservaReservaQuandoHaConflito() throws Exception {
         LocalDateTime ocupado = horario.plusHours(1);
         Consulta outra = new Consulta(paciente, medico, ocupado, "Retorno", 100);
         medico.reservar(outra);
-        assertThrows(IllegalStateException.class, () -> consulta.setDataHora(ocupado));
+        assertThrows(HorarioIndisponivelException.class, () -> consulta.setDataHora(ocupado));
         assertEquals(horario, consulta.getDataHora());
         assertSame(consulta, medico.getAgenda().get(horario));
         assertSame(outra, medico.getAgenda().get(ocupado));
@@ -86,5 +87,16 @@ public class AgendaTest {
         assertThrows(IllegalArgumentException.class, () -> consulta.setDataHora(null));
         assertThrows(IllegalArgumentException.class, () -> consulta.setDataHora(LocalDateTime.now().minusDays(1)));
         assertSame(consulta, medico.getAgenda().get(horario));
+    }
+    @Test
+    public void informaMedicoEHorarioNoConflito() throws Exception {
+        Consulta outra = new Consulta(paciente, medico, horario, "Retorno", 100);
+        HorarioIndisponivelException erro = assertThrows(HorarioIndisponivelException.class,
+                () -> medico.reservar(outra));
+        assertTrue(erro.getMessage().contains(medico.getNome()));
+        assertTrue(erro.getMessage().contains(medico.getCrm()));
+        assertTrue(erro.getMessage().contains(horario.toString()));
+        assertSame(consulta, medico.getAgenda().get(horario));
+        assertEquals(1, medico.getAgenda().size());
     }
 }
