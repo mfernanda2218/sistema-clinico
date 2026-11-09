@@ -1,6 +1,7 @@
 package clinica.model;
 
 import clinica.interfaces.Cobravel;
+import clinica.interfaces.EstrategiaPreco;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -14,15 +15,22 @@ public class Consulta implements Cobravel {
     private String tipo;
     private double valorBase;
     private String formaCobranca;
+    private transient EstrategiaPreco estrategia;
 
     public Consulta(Paciente paciente, Medico medico, LocalDateTime dataHora,
                     String tipo, double valorBase) {
+        this(paciente, medico, dataHora, tipo, valorBase, new PrecoParticular());
+    }
+
+    public Consulta(Paciente paciente, Medico medico, LocalDateTime dataHora,
+                    String tipo, double valorBase, EstrategiaPreco estrategia) {
         this.id = UUID.randomUUID().toString();
         setPaciente(paciente);
         setMedico(medico);
         setDataHora(dataHora);
         setTipo(tipo);
         setValorBase(valorBase);
+        setEstrategia(estrategia);
     }
 
     public String getId() {
@@ -39,7 +47,6 @@ public class Consulta implements Cobravel {
         }
         this.paciente = paciente;
         this.cpfPaciente = paciente.getCpf();
-        this.formaCobranca = paciente.isParticular() ? "Particular" : "Convênio";
     }
 
     public Medico getMedico() {
@@ -49,6 +56,9 @@ public class Consulta implements Cobravel {
     public void setMedico(Medico medico) {
         if (medico == null) {
             throw new IllegalArgumentException("Médico é obrigatório.");
+        }
+        if (this.medico != null && this.medico != medico && this.medico.possuiReserva(this)) {
+            throw new IllegalStateException("Libere a reserva antes de trocar o médico.");
         }
         this.medico = medico;
         this.crmMedico = medico.getCrm();
@@ -73,6 +83,9 @@ public class Consulta implements Cobravel {
     public void setDataHora(LocalDateTime dataHora) {
         if (dataHora == null || !dataHora.isAfter(LocalDateTime.now())) {
             throw new IllegalArgumentException("Data e hora devem estar no futuro.");
+        }
+        if (medico != null) {
+            medico.atualizarHorario(this, dataHora);
         }
         this.dataHora = dataHora;
     }
@@ -101,7 +114,15 @@ public class Consulta implements Cobravel {
 
     @Override
     public double calcularValor() {
-        return valorBase;
+        return estrategia.calcular(valorBase);
+    }
+
+    public void setEstrategia(EstrategiaPreco estrategia) {
+        if (estrategia == null) {
+            throw new IllegalArgumentException("Estratégia de preço é obrigatória.");
+        }
+        this.estrategia = estrategia;
+        this.formaCobranca = estrategia.getNome();
     }
 
     @Override
