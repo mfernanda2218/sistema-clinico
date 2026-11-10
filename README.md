@@ -2,7 +2,7 @@
  
 Projeto final de Programação Orientada a Objetos (UFAL Arapiraca): CRUD de **Pacientes**, **Médicos** e **Consultas** em Java, com interface JavaFX e persistência em JSON.
  
-**Equipe:** mfernanda2218 (A: Paciente/Prontuário) · giovannaalopes (B: Médico/Especialidades) · devlu4n (C: Consulta/Cobrança)
+**Equipe:** Maria Fernanda · Giovanna Sophia · Luan Henrique
  
 > Este README é um documento vivo. Esta versão cobre a issue **#2** (UML e contratos). A issue **#35** o completa com as instruções de execução.
  
