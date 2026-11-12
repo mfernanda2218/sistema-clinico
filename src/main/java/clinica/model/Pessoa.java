@@ -42,6 +42,9 @@ public abstract class Pessoa {
         if (cpfLimpo.length() != 11) {
             throw new IllegalArgumentException("CPF deve conter 11 dígitos.");
         }
+        if (this.cpf != null && !this.cpf.equals(cpfLimpo)) {
+            throw new IllegalStateException("CPF não pode ser alterado após o cadastro.");
+        }
         this.cpf = cpfLimpo;
     }
 
