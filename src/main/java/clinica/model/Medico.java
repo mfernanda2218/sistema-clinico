@@ -1,6 +1,7 @@
 package clinica.model;
 
 import clinica.interfaces.Agendavel;
+import clinica.exception.HorarioIndisponivelException;
 import java.time.LocalDateTime;
 import java.util.TreeMap;
 import clinica.exception.MedicoNaoEncontradoException;
@@ -44,7 +45,7 @@ public abstract class Medico extends Pessoa implements Agendavel {
     }
 
     @Override
-    public void reservar(Consulta consulta) {
+    public void reservar(Consulta consulta) throws HorarioIndisponivelException {
         if (consulta == null || consulta.getMedico() != this) {
             throw new IllegalArgumentException("A consulta deve pertencer a este médico.");
         }
@@ -53,7 +54,7 @@ public abstract class Medico extends Pessoa implements Agendavel {
             throw new IllegalArgumentException("Horário deve estar no futuro.");
         }
         if (!estaDisponivel(horario)) {
-            throw new IllegalStateException("Horário já ocupado: " + horario);
+            throw new HorarioIndisponivelException("Médico " + getNome() + " (CRM " + crm + ") já possui consulta no horário " + horario);
         }
         agenda.put(horario, consulta);
     }
@@ -69,13 +70,13 @@ public abstract class Medico extends Pessoa implements Agendavel {
         return agenda.containsValue(consulta);
     }
 
-    void atualizarHorario(Consulta consulta, LocalDateTime novoHorario) {
+    void atualizarHorario(Consulta consulta, LocalDateTime novoHorario) throws HorarioIndisponivelException {
         if (!possuiReserva(consulta)) {
             return;
         }
         Consulta consultaNoHorario = agenda.get(novoHorario);
         if (consultaNoHorario != null && consultaNoHorario != consulta) {
-            throw new IllegalStateException("Horário já ocupado: " + novoHorario);
+            throw new HorarioIndisponivelException("Médico " + getNome() + " (CRM " + crm + ") já possui consulta no horário " + novoHorario);
         }
         agenda.remove(consulta.getDataHora());
         agenda.put(novoHorario, consulta);
