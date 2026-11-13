@@ -26,12 +26,12 @@ public class Consulta implements Cobravel {
     public Consulta(Paciente paciente, Medico medico, LocalDateTime dataHora,
                     String tipo, double valorBase, EstrategiaPreco estrategia) throws HorarioIndisponivelException {
         this.id = UUID.randomUUID().toString();
-        setPaciente(paciente);
-        setMedico(medico);
-        setDataHora(dataHora);
-        setTipo(tipo);
-        setValorBase(valorBase);
-        setEstrategia(estrategia);
+    	setPaciente(paciente);
+    	setDataHora(dataHora);   
+    	setMedico(medico);      
+    	setTipo(tipo);
+    	setValorBase(valorBase);
+    	setEstrategia(estrategia);
     }
 
     public String getId() {
@@ -58,8 +58,8 @@ public class Consulta implements Cobravel {
         if (medico == null) {
             throw new IllegalArgumentException("Médico é obrigatório.");
         }
-        if (this.medico != null && this.medico != medico && this.medico.possuiReserva(this)) {
-            throw new IllegalStateException("Libere a reserva antes de trocar o médico.");
+        if (this.medico != null && this.medico != medico) {
+            this.medico.liberar(this.dataHora);
         }
         this.medico = medico;
         this.crmMedico = medico.getCrm();
@@ -81,11 +81,11 @@ public class Consulta implements Cobravel {
         return dataHora;
     }
 
-    public void setDataHora(LocalDateTime dataHora) throws HorarioIndisponivelException {
+     public void setDataHora(LocalDateTime dataHora) throws HorarioIndisponivelException {
         if (dataHora == null || !dataHora.isAfter(LocalDateTime.now())) {
             throw new IllegalArgumentException("Data e hora devem estar no futuro.");
         }
-        if (medico != null) {
+        if (medico != null && medico.possuiReserva(this)) {
             medico.atualizarHorario(this, dataHora);
         }
         this.dataHora = dataHora;
