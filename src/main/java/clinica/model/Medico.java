@@ -5,7 +5,6 @@ import clinica.exception.HorarioIndisponivelException;
 import java.time.LocalDateTime;
 import java.util.TreeMap;
 import clinica.exception.MedicoNaoEncontradoException;
-import clinica.exception.HorarioIndisponivelException;
 
 public abstract class Medico extends Pessoa implements Agendavel {
     private String crm;
