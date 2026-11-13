@@ -91,4 +91,23 @@ public abstract class Medico extends Pessoa implements Agendavel {
         return String.format("Médico: %s | CRM: %s | Especialidade: %s",
                 getNome(), crm, getEspecialidade());
     }
+
+    public boolean possuiReserva(Consulta consulta) {
+        return agenda.containsValue(consulta);
+    }
+
+    public void atualizarHorario(Consulta consulta, LocalDateTime novoHorario)
+            throws HorarioIndisponivelException {
+        LocalDateTime antigo = consulta.getHorario();
+        if (antigo != null) {
+            agenda.remove(antigo);
+        }
+        if (!estaDisponivel(novoHorario)) {
+            if (antigo != null) {
+                agenda.put(antigo, consulta);
+            }
+            throw new HorarioIndisponivelException("Horário já ocupado: " + novoHorario);
+        }
+        agenda.put(novoHorario, consulta);
+    }
 }
