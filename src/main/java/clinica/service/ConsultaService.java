@@ -1,6 +1,7 @@
 package clinica.service;
 
 import clinica.exception.ConvenioInvalidoException;
+import clinica.exception.ConsultaNaoEncontradaException;
 import clinica.exception.HorarioIndisponivelException;
 import clinica.exception.MedicoNaoEncontradoException;
 import clinica.exception.PacienteNaoEncontradoException;
@@ -8,6 +9,7 @@ import clinica.interfaces.EstrategiaPreco;
 import clinica.interfaces.Repositorio;
 import clinica.model.*;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
@@ -66,5 +68,91 @@ public class ConsultaService {
             }
         }
         return new ArrayList<>(agenda.values());
+    }
+
+    public List<Consulta> listar() {
+        return new ArrayList<>(repositorio.listar());
+    }
+
+    public Consulta buscarPorId(String id) throws ConsultaNaoEncontradaException {
+        Consulta consulta = repositorio.buscar(id);
+        if (consulta == null) {
+            throw new ConsultaNaoEncontradaException("Consulta não encontrada: " + id);
+        }
+        return consulta;
+    }
+
+    public List<Consulta> listarPorPaciente(String cpf) {
+        if (cpf == null || cpf.isBlank()) {
+            throw new IllegalArgumentException("CPF é obrigatório.");
+        }
+        String cpfLimpo = cpf.replaceAll("\\D", "");
+        List<Consulta> resultado = new ArrayList<>();
+        for (Consulta consulta : repositorio.listar()) {
+            if (consulta.getCpfPaciente().equals(cpfLimpo)) {
+                resultado.add(consulta);
+            }
+        }
+        return resultado;
+    }
+
+    public List<Consulta> listarPorMedico(String crm) {
+        if (crm == null || crm.isBlank()) {
+            throw new IllegalArgumentException("CRM é obrigatório.");
+        }
+        List<Consulta> resultado = new ArrayList<>();
+        for (Consulta consulta : repositorio.listar()) {
+            if (consulta.getCrmMedico().equals(crm.trim())) {
+                resultado.add(consulta);
+            }
+        }
+        return resultado;
+    }
+
+    public List<Consulta> listarPorData(LocalDate data) {
+        if (data == null) {
+            throw new IllegalArgumentException("Data é obrigatória.");
+        }
+        List<Consulta> resultado = new ArrayList<>();
+        for (Consulta consulta : repositorio.listar()) {
+            if (consulta.getDataHora().toLocalDate().equals(data)) {
+                resultado.add(consulta);
+            }
+        }
+        return resultado;
+    }
+
+    public void remarcar(String id, LocalDateTime novoHorario)
+            throws ConsultaNaoEncontradaException, HorarioIndisponivelException {
+        Consulta antiga = buscarPorId(id);
+        Consulta nova = antiga.copiarParaHorario(novoHorario);
+        Medico medico = antiga.getMedico();
+        for (Consulta existente : listarPorMedico(medico.getCrm())) {
+            if (!existente.getId().equals(id) && existente.getDataHora().equals(novoHorario)) {
+                throw new HorarioIndisponivelException("Médico " + medico.getNome()
+                        + " (CRM " + medico.getCrm() + ") já possui consulta no horário " + novoHorario);
+            }
+        }
+        Consulta reserva = medico.getAgenda().get(novoHorario);
+        if (reserva != null && !reserva.getId().equals(id)) {
+            throw new HorarioIndisponivelException("Médico " + medico.getNome()
+                    + " (CRM " + medico.getCrm() + ") já possui consulta no horário " + novoHorario);
+        }
+        repositorio.atualizar(nova);
+        Consulta reservaAntiga = medico.getAgenda().get(antiga.getDataHora());
+        if (reservaAntiga != null && reservaAntiga.getId().equals(id)) {
+            medico.liberar(antiga.getDataHora());
+        }
+        medico.reservar(nova);
+    }
+
+    public void cancelar(String id) throws ConsultaNaoEncontradaException {
+        Consulta consulta = buscarPorId(id);
+        repositorio.excluir(id);
+        Medico medico = consulta.getMedico();
+        Consulta reserva = medico.getAgenda().get(consulta.getDataHora());
+        if (reserva != null && reserva.getId().equals(id)) {
+            medico.liberar(consulta.getDataHora());
+        }
     }
 }

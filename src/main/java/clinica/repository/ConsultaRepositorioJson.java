@@ -10,6 +10,8 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -138,6 +140,9 @@ public class ConsultaRepositorioJson implements Repositorio<Consulta> {
             }
             for (JsonElement elemento : raiz.getAsJsonArray()) {
                 JsonObject objeto = elemento.getAsJsonObject();
+                if (!objeto.has("valorBase") || objeto.get("valorBase").isJsonNull()) {
+                    throw new IllegalArgumentException("Valor da consulta ausente no arquivo.");
+                }
                 Consulta consulta = gson.fromJson(objeto, Consulta.class);
                 consulta.setPaciente(pacientes.buscar(consulta.getCpfPaciente()));
                 consulta.setMedico(encontrarMedico(consulta.getCrmMedico()));
@@ -177,15 +182,30 @@ public class ConsultaRepositorioJson implements Repositorio<Consulta> {
             }
             lista.add(objeto);
         }
+        Path temporario = null;
         try {
             if (arquivo.getParent() != null) {
                 Files.createDirectories(arquivo.getParent());
             }
-            try (Writer writer = Files.newBufferedWriter(arquivo, StandardCharsets.UTF_8)) {
+            temporario = Files.createTempFile(arquivo.toAbsolutePath().getParent(), "consultas-", ".tmp");
+            try (Writer writer = Files.newBufferedWriter(temporario, StandardCharsets.UTF_8)) {
                 gson.toJson(lista, writer);
+            }
+            try {
+                Files.move(temporario, arquivo, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            } catch (AtomicMoveNotSupportedException e) {
+                Files.move(temporario, arquivo, StandardCopyOption.REPLACE_EXISTING);
             }
         } catch (IOException e) {
             throw new UncheckedIOException("Falha ao gravar consultas: " + arquivo, e);
+        } finally {
+            if (temporario != null) {
+                try {
+                    Files.deleteIfExists(temporario);
+                } catch (IOException e) {
+                    temporario.toFile().deleteOnExit();
+                }
+            }
         }
     }
 }
