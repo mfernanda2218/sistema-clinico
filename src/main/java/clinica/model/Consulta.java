@@ -25,7 +25,12 @@ public class Consulta implements Cobravel {
 
     public Consulta(Paciente paciente, Medico medico, LocalDateTime dataHora,
                     String tipo, double valorBase, EstrategiaPreco estrategia) throws HorarioIndisponivelException {
-        this.id = UUID.randomUUID().toString();
+        this(UUID.randomUUID().toString(), paciente, medico, dataHora, tipo, valorBase, estrategia);
+    }
+
+    private Consulta(String id, Paciente paciente, Medico medico, LocalDateTime dataHora,
+                     String tipo, double valorBase, EstrategiaPreco estrategia) throws HorarioIndisponivelException {
+        this.id = id;
     	setPaciente(paciente);
     	setDataHora(dataHora);   
     	setMedico(medico);      
@@ -36,6 +41,10 @@ public class Consulta implements Cobravel {
 
     public String getId() {
         return id;
+    }
+
+    public Consulta copiarParaHorario(LocalDateTime novoHorario) throws HorarioIndisponivelException {
+        return new Consulta(id, paciente, medico, novoHorario, tipo, valorBase, estrategia);
     }
 
     public Paciente getPaciente() {

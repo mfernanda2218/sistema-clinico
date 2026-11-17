@@ -2,6 +2,11 @@ package clinica.repository;
 
 import clinica.interfaces.Repositorio;
 import clinica.model.*;
+import clinica.service.ConsultaService;
+import clinica.service.PacienteService;
+import clinica.service.MedicoService;
+import clinica.exception.ConsultaNaoEncontradaException;
+import clinica.exception.HorarioIndisponivelException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.junit.Test;
@@ -14,6 +19,22 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class ConsultaRepositorioJsonTest {
+    private static class RepositorioComFalha extends ConsultaRepositorioJson {
+        private boolean falhar;
+
+        RepositorioComFalha(String caminho, Repositorio<Paciente> pacientes, Repositorio<Medico> medicos) {
+            super(caminho, pacientes, medicos);
+        }
+
+        @Override
+        public void salvar() {
+            if (falhar) {
+                throw new java.io.UncheckedIOException(new java.io.IOException("Falha simulada"));
+            }
+            super.salvar();
+        }
+    }
+
     private static class RepositorioTeste<T> implements Repositorio<T> {
         private final List<T> itens = new ArrayList<>();
         public void cadastrar(T item) { itens.add(item); }
@@ -23,11 +44,92 @@ public class ConsultaRepositorioJsonTest {
                 if (item instanceof Paciente paciente && paciente.getCpf().equals(id)) {
                     return item;
                 }
+                if (item instanceof Medico medico && medico.getCrm().equals(id)) {
+                    return item;
+                }
             }
             return null;
         }
         public void atualizar(T item) { throw new UnsupportedOperationException(); }
         public void excluir(String id) { throw new UnsupportedOperationException(); }
+    }
+
+    @Test
+    public void preservaConsultaAgendaEArquivoQuandoSalvarFalha() throws Exception {
+        Path pasta = Files.createTempDirectory("falha-consultas");
+        Path arquivo = pasta.resolve("consultas.json");
+        try {
+            RepositorioTeste<Paciente> pacientes = new RepositorioTeste<>();
+            RepositorioTeste<Medico> medicos = new RepositorioTeste<>();
+            Paciente paciente = new Paciente("Ana", "12345678900", "9999", LocalDate.of(2000, 1, 1));
+            Medico medico = new Clinico("Bia", "98765432100", "9999", "123");
+            pacientes.cadastrar(paciente);
+            medicos.cadastrar(medico);
+            RepositorioComFalha repo = new RepositorioComFalha(arquivo.toString(), pacientes, medicos);
+            ConsultaService service = new ConsultaService(repo, new PacienteService(pacientes), new MedicoService(medicos), 20);
+            LocalDateTime horario = LocalDateTime.now().plusDays(1);
+            Consulta consulta = service.agendar(paciente.getCpf(), "123", horario, "Rotina");
+            String original = Files.readString(arquivo);
+            repo.falhar = true;
+            assertThrows(java.io.UncheckedIOException.class, () -> service.remarcar(consulta.getId(), horario.plusHours(1)));
+            assertThrows(java.io.UncheckedIOException.class, () -> service.cancelar(consulta.getId()));
+            assertSame(consulta, service.buscarPorId(consulta.getId()));
+            assertSame(consulta, medico.getAgenda().get(horario));
+            assertTrue(medico.estaDisponivel(horario.plusHours(1)));
+            assertEquals(original, Files.readString(arquivo));
+            JsonObject objeto = JsonParser.parseString(original).getAsJsonArray().get(0).getAsJsonObject();
+            objeto.remove("valorBase");
+            Files.writeString(arquivo, "[" + objeto + "]");
+            assertThrows(IllegalArgumentException.class, repo::carregar);
+            assertSame(consulta, repo.buscar(consulta.getId()));
+        } finally {
+            Files.deleteIfExists(arquivo);
+            Files.deleteIfExists(pasta);
+        }
+    }
+
+    @Test
+    public void remarcaCancelaEFiltraComPersistencia() throws Exception {
+        Path pasta = Files.createTempDirectory("crud-consultas");
+        Path arquivo = pasta.resolve("consultas.json");
+        try {
+            RepositorioTeste<Paciente> pacientes = new RepositorioTeste<>();
+            RepositorioTeste<Medico> medicos = new RepositorioTeste<>();
+            Paciente paciente = new Paciente("Ana", "12345678900", "9999", LocalDate.of(2000, 1, 1));
+            Medico medico = new Clinico("Bia", "98765432100", "9999", "123");
+            pacientes.cadastrar(paciente);
+            medicos.cadastrar(medico);
+            ConsultaRepositorioJson repo = new ConsultaRepositorioJson(arquivo.toString(), pacientes, medicos);
+            ConsultaService service = new ConsultaService(repo, new PacienteService(pacientes), new MedicoService(medicos), 20);
+            LocalDateTime horario = LocalDateTime.now().plusDays(1);
+            Consulta primeira = service.agendar(paciente.getCpf(), "123", horario, "Rotina");
+            Consulta segunda = service.agendar(paciente.getCpf(), "123", horario.plusHours(1), "Rotina");
+            String antes = Files.readString(arquivo);
+            assertThrows(HorarioIndisponivelException.class, () -> service.remarcar(primeira.getId(), segunda.getDataHora()));
+            assertEquals(antes, Files.readString(arquivo));
+            assertEquals(horario, service.buscarPorId(primeira.getId()).getDataHora());
+            assertSame(primeira, medico.getAgenda().get(horario));
+            LocalDateTime novoHorario = horario.plusDays(1);
+            service.remarcar(primeira.getId(), novoHorario);
+            assertTrue(medico.estaDisponivel(horario));
+            assertEquals(primeira.getId(), medico.getAgenda().get(novoHorario).getId());
+            repo.carregar();
+            assertEquals(novoHorario, service.buscarPorId(primeira.getId()).getDataHora());
+            assertEquals(2, service.listarPorPaciente("123.456.789-00").size());
+            assertEquals(2, service.listarPorMedico("123").size());
+            assertEquals(1, service.listarPorData(novoHorario.toLocalDate()).size());
+            service.listar().clear();
+            assertEquals(2, service.listar().size());
+            service.cancelar(primeira.getId());
+            assertTrue(medico.estaDisponivel(novoHorario));
+            repo.carregar();
+            assertEquals(1, service.listar().size());
+            assertThrows(ConsultaNaoEncontradaException.class, () -> service.buscarPorId(primeira.getId()));
+            assertThrows(ConsultaNaoEncontradaException.class, () -> service.cancelar("inexistente"));
+        } finally {
+            Files.deleteIfExists(arquivo);
+            Files.deleteIfExists(pasta);
+        }
     }
 
     @Test
