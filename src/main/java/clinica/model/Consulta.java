@@ -58,8 +58,8 @@ public class Consulta implements Cobravel {
         if (medico == null) {
             throw new IllegalArgumentException("Médico é obrigatório.");
         }
-        if (this.medico != null && this.medico != medico) {
-            this.medico.liberar(this.dataHora);
+        if (this.medico != null && this.medico != medico && this.medico.possuiReserva(this)) {
+            throw new IllegalStateException("Libere a reserva antes de trocar o médico.");
         }
         this.medico = medico;
         this.crmMedico = medico.getCrm();
@@ -124,6 +124,10 @@ public class Consulta implements Cobravel {
         }
         this.estrategia = estrategia;
         this.formaCobranca = estrategia.getNome();
+    }
+
+    public EstrategiaPreco getEstrategia() {
+        return estrategia;
     }
 
     @Override
