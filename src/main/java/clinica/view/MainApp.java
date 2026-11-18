@@ -1,5 +1,6 @@
 package clinica.view;
 
+import clinica.service.PacienteService;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
@@ -19,8 +20,8 @@ public class MainApp extends Application {
         // Aba Pacientes
         Tab tabPacientes = new Tab("Pacientes");
         tabPacientes.setClosable(false);
-        tabPacientes.setContent(criarPlaceholder("Tela de Pacientes (A) - em construção"));
-
+        PacienteService pacienteService = new PacienteService();
+        tabPacientes.setContent(new PacienteView(pacienteService));
         // Aba Médicos
         Tab tabMedicos = new Tab("Médicos");
         tabMedicos.setClosable(false);
