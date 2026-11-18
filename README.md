@@ -172,8 +172,11 @@ classDiagram
 ```
  
 **Notas:**
-- `Medico.agenda` é `transient`: não vai para o JSON. O service a reconstrói ao carregar as consultas.
-- `Consulta` tem referências de objeto para `Paciente` e `Medico` (associação), ambas `transient`. No JSON vão só `cpfPaciente` e `crmMedico`; ao carregar, o service busca pelos identificadores e reconecta os objetos.
+- `Medico.agenda` é `transient`: não vai para o JSON. O `Medico` implementa `Agendavel` (4 métodos: `estaDisponivel`, `reservar`, `liberar` e `getAgenda`), mantendo a responsabilidade e o encapsulamento dos seus próprios horários. O `ConsultaService` delega a validação de horários ao médico.
+- `Consulta` tem `id` próprio (`UUID` em texto), permitindo identificação estável e uso unificado de `Repositorio.buscar(String id)`.
+- `Consulta` associa-se por objeto a `Paciente` e `Medico` (ambos `transient`). No JSON persistem-se apenas `cpfPaciente` e `crmMedico`; ao carregar, o repositório/service reconecta os objetos reais.
+- `formaCobranca` é persistida como texto (`"Particular"` ou `"Convênio"` acompanhada de `percentualDesconto`), e a respectiva `EstrategiaPreco` é reconstruída na leitura.
+
 ### 2.2 Persistência, serviços e telas
  
 ```mermaid
@@ -182,7 +185,7 @@ classDiagram
         <<interface>>
         +cadastrar(T entidade) void
         +listar() List~T~
-        +buscar(String id) Optional~T~
+        +buscar(String id) T
         +atualizar(T entidade) void
         +excluir(String id) void
         +carregar() void
@@ -198,14 +201,20 @@ classDiagram
  
     class PacienteRepositorioJson {
         -String caminhoArquivo
+        -List pacientes
+        -Map pacientePorCpf
     }
  
     class MedicoRepositorioJson {
         -String caminhoArquivo
+        -List medicos
     }
  
     class ConsultaRepositorioJson {
-        -String caminhoArquivo
+        -Path arquivo
+        -Repositorio pacientes
+        -Repositorio medicos
+        -List consultas
     }
  
     class PacienteService {
@@ -229,10 +238,14 @@ classDiagram
  
     class ConsultaService {
         -Repositorio repositorio
+        -PacienteService pacientes
+        -MedicoService medicos
+        -double descontoConvenio
         +agendar(String cpfPaciente, String crmMedico, LocalDateTime dataHora, String tipo) Consulta
         +remarcar(String id, LocalDateTime novoHorario) void
         +cancelar(String id) void
         +listar() List~Consulta~
+        +listarAgenda(String crm) List~Consulta~
         +buscarPorId(String id) Consulta
         +listarPorPaciente(String cpf) List~Consulta~
         +listarPorMedico(String crm) List~Consulta~
@@ -251,12 +264,14 @@ classDiagram
     Repositorio <|.. PacienteRepositorioJson : T = Paciente
     Repositorio <|.. MedicoRepositorioJson : T = Medico
     Repositorio <|.. ConsultaRepositorioJson : T = Consulta
+
+    ConsultaRepositorioJson --> Repositorio : reconecta Paciente e Medico
  
     PacienteService --> Repositorio : usa
     MedicoService --> Repositorio : usa
     ConsultaService --> Repositorio : usa
     ConsultaService --> PacienteService : valida paciente
-    ConsultaService --> MedicoService : valida médico
+    ConsultaService --> MedicoService : valida médico e agenda
  
     MedicoService ..> MedicoFactory : cria via
     MedicoRepositorioJson ..> MedicoFactory : reconstrói na leitura
@@ -268,7 +283,10 @@ classDiagram
  
 **Notas:**
 - No `pacientes.json`, o prontuário e seus registros ficam aninhados dentro do paciente.
-- `ConsultaRepositorioJson` usa um `TypeAdapter` para `LocalDateTime`.
+- `ConsultaRepositorioJson` usa um `TypeAdapter` para `LocalDateTime` e recebe instâncias de `Repositorio<Paciente>` e `Repositorio<Medico>` para reconstruir a associação por objetos.
+- **Singleton:** Mantido exclusivamente em `PacienteRepositorioMemoria` para atender ao requisito acadêmico de padrões de projeto. Os repositórios JSON **não** são Singletons com construtor privado, garantindo testabilidade isolada com arquivos temporários e injeção de dependências.
+- **Tratamento de Exceções:** Repositórios lançam `IllegalArgumentException` (para ID duplicado ou inexistente); os *services* traduzem para as exceções de domínio (`PacienteNaoEncontradoException`, `MedicoNaoEncontradoException`, `ConsultaNaoEncontradaException`).
+- **Persistência (`carregar()` e `salvar()`):** Métodos `default` na interface `Repositorio<T>` garantem suporte à persistência nos repositórios JSON sem onerar o repositório em memória.
 ---
  
 ## 3. Contratos (assinaturas fixadas)
@@ -426,17 +444,3 @@ Na interface, toda exception é capturada e mostrada em `Alert`, sem stack trace
 | Estruturas de dados | `ArrayList`, `HashMap` (índice por CPF), `TreeMap` (agenda ordenada) |
 | Padrões de projeto | Singleton (`PacienteRepositorioMemoria`), Factory (`MedicoFactory`), Strategy (`EstrategiaPreco`) |
  
----
- 
-## 5. Decisões de modelagem a confirmar
- 
-Estas escolhas foram feitas para fechar o diagrama e **ajustam levemente** algumas issues. Confirmar na revisão do PR:
- 
-1. **Agenda dentro do `Medico`** (`transient TreeMap`), com `Agendavel` incluindo `reservar` e `liberar`. A issue #23 dizia que o `ConsultaService` mantinha o `TreeMap`; agora ele delega ao médico. A issue #8 passa a ter 4 métodos, não 2.
-2. **`Consulta` tem `id` próprio** (UUID em texto), assim `Repositorio.buscar(String id)` serve para as três entidades.
-3. **Repositório lança `IllegalArgumentException`** (id duplicado ou inexistente); os *services* traduzem para as exceptions de domínio.
-4. **Duas exceptions novas** que o backlog ainda não previa: `MedicoNaoEncontradoException` (junto da #19) e `ConsultaNaoEncontradaException` (junto da #24).
-5. **`Repositorio` tem `carregar()` e `salvar()`**, que sustentam as issues #27 e #33 (carregar ao abrir e salvar ao fechar).
-6. **Forma de cobrança gravada como texto** em `Consulta`; a `EstrategiaPreco` é reconstruída na leitura (issue #22).
-7. **Singleton só no `PacienteRepositorioMemoria`**, como na #15. Decidir se os repositórios JSON também serão Singleton.
-8. **`Consulta` associa por objeto**, e não só por texto. Nos slides de associação (aula 09, p.5-7) a classe sempre guarda um atributo do tipo da outra classe. Por isso `paciente` e `medico` são `transient`, e o JSON grava apenas `cpfPaciente` e `crmMedico`. Isso ajusta as issues #11, #22 e #23.
