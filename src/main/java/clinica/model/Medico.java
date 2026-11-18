@@ -91,5 +91,4 @@ public abstract class Medico extends Pessoa implements Agendavel {
         return String.format("Médico: %s | CRM: %s | Especialidade: %s",
                 getNome(), crm, getEspecialidade());
     }
-
 }
