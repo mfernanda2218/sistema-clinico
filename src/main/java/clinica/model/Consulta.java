@@ -25,7 +25,12 @@ public class Consulta implements Cobravel {
 
     public Consulta(Paciente paciente, Medico medico, LocalDateTime dataHora,
                     String tipo, double valorBase, EstrategiaPreco estrategia) throws HorarioIndisponivelException {
-        this.id = UUID.randomUUID().toString();
+        this(UUID.randomUUID().toString(), paciente, medico, dataHora, tipo, valorBase, estrategia);
+    }
+
+    private Consulta(String id, Paciente paciente, Medico medico, LocalDateTime dataHora,
+                     String tipo, double valorBase, EstrategiaPreco estrategia) throws HorarioIndisponivelException {
+        this.id = id;
     	setPaciente(paciente);
     	setDataHora(dataHora);   
     	setMedico(medico);      
@@ -36,6 +41,10 @@ public class Consulta implements Cobravel {
 
     public String getId() {
         return id;
+    }
+
+    public Consulta copiarParaHorario(LocalDateTime novoHorario) throws HorarioIndisponivelException {
+        return new Consulta(id, paciente, medico, novoHorario, tipo, valorBase, estrategia);
     }
 
     public Paciente getPaciente() {
@@ -58,8 +67,8 @@ public class Consulta implements Cobravel {
         if (medico == null) {
             throw new IllegalArgumentException("Médico é obrigatório.");
         }
-        if (this.medico != null && this.medico != medico) {
-            this.medico.liberar(this.dataHora);
+        if (this.medico != null && this.medico != medico && this.medico.possuiReserva(this)) {
+            throw new IllegalStateException("Libere a reserva antes de trocar o médico.");
         }
         this.medico = medico;
         this.crmMedico = medico.getCrm();
@@ -124,6 +133,10 @@ public class Consulta implements Cobravel {
         }
         this.estrategia = estrategia;
         this.formaCobranca = estrategia.getNome();
+    }
+
+    public EstrategiaPreco getEstrategia() {
+        return estrategia;
     }
 
     @Override
