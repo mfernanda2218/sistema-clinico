@@ -1,5 +1,6 @@
 package clinica.service;
 
+import clinica.exception.ArquivoInvalidoException;
 import clinica.exception.PacienteNaoEncontradoException;
 import clinica.interfaces.Repositorio;
 import clinica.model.Paciente;
@@ -11,7 +12,7 @@ public class PacienteService {
 
     private final Repositorio<Paciente> repositorio;
 
-    public PacienteService() {
+    public PacienteService() throws ArquivoInvalidoException {
         this(new PacienteRepositorioJson());
     }
 
