@@ -1,10 +1,12 @@
 package clinica.repository;
 
+import clinica.exception.ArquivoInvalidoException;
 import clinica.interfaces.Repositorio;
 import clinica.model.Paciente;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializer;
 import com.google.gson.reflect.TypeToken;
@@ -31,11 +33,11 @@ public class PacienteRepositorioJson implements Repositorio<Paciente> {
     private final Map<String, Paciente> pacientePorCpf;
     private final Gson gson;
 
-    public PacienteRepositorioJson() {
+    public PacienteRepositorioJson() throws ArquivoInvalidoException {
         this("dados/pacientes.json");
     }
 
-    public PacienteRepositorioJson(String caminhoArquivo) {
+    public PacienteRepositorioJson(String caminhoArquivo) throws ArquivoInvalidoException {
         this.caminhoArquivo = caminhoArquivo;
         this.pacientes = new ArrayList<>();
         this.pacientePorCpf = new HashMap<>();
@@ -120,7 +122,7 @@ public class PacienteRepositorioJson implements Repositorio<Paciente> {
     }
 
     @Override
-    public void carregar() {
+    public void carregar() throws ArquivoInvalidoException {
         File arquivo = new File(caminhoArquivo);
         if (!arquivo.exists()) {
             return;
@@ -130,17 +132,30 @@ public class PacienteRepositorioJson implements Repositorio<Paciente> {
             Type tipoLista = new TypeToken<ArrayList<Paciente>>() {}.getType();
             List<Paciente> carregados = gson.fromJson(reader, tipoLista);
 
-            pacientes.clear();
-            pacientePorCpf.clear();
+            List<Paciente> novaLista = new ArrayList<>();
+            Map<String, Paciente> novoMap = new HashMap<>();
 
             if (carregados != null) {
                 for (Paciente p : carregados) {
-                    pacientes.add(p);
-                    pacientePorCpf.put(p.getCpf(), p);
+                    if (p == null || p.getCpf() == null || p.getCpf().isBlank()) {
+                        throw new ArquivoInvalidoException("Arquivo de pacientes contém paciente inválido ou sem CPF.");
+                    }
+                    String cpfLimpo = p.getCpf().replaceAll("\\D", "");
+                    String chave = cpfLimpo.isEmpty() ? p.getCpf() : cpfLimpo;
+                    if (novoMap.containsKey(chave)) {
+                        throw new ArquivoInvalidoException("Arquivo de pacientes contém CPF duplicado: " + p.getCpf());
+                    }
+                    novaLista.add(p);
+                    novoMap.put(chave, p);
                 }
             }
-        } catch (IOException e) {
-            throw new UncheckedIOException("Falha ao ler arquivo: " + caminhoArquivo, e);
+
+            pacientes.clear();
+            pacientes.addAll(novaLista);
+            pacientePorCpf.clear();
+            pacientePorCpf.putAll(novoMap);
+        } catch (JsonParseException | IOException e) {
+            throw new ArquivoInvalidoException("Arquivo de pacientes corrompido ou inválido: " + caminhoArquivo, e);
         }
     }
 

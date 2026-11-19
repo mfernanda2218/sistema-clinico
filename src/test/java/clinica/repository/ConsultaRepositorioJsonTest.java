@@ -5,6 +5,7 @@ import clinica.model.*;
 import clinica.service.ConsultaService;
 import clinica.service.PacienteService;
 import clinica.service.MedicoService;
+import clinica.exception.ArquivoInvalidoException;
 import clinica.exception.ConsultaNaoEncontradaException;
 import clinica.exception.HorarioIndisponivelException;
 import com.google.gson.JsonObject;
@@ -22,7 +23,7 @@ public class ConsultaRepositorioJsonTest {
     private static class RepositorioComFalha extends ConsultaRepositorioJson {
         private boolean falhar;
 
-        RepositorioComFalha(String caminho, Repositorio<Paciente> pacientes, Repositorio<Medico> medicos) {
+        RepositorioComFalha(String caminho, Repositorio<Paciente> pacientes, Repositorio<Medico> medicos) throws ArquivoInvalidoException {
             super(caminho, pacientes, medicos);
         }
 
@@ -80,7 +81,7 @@ public class ConsultaRepositorioJsonTest {
             JsonObject objeto = JsonParser.parseString(original).getAsJsonArray().get(0).getAsJsonObject();
             objeto.remove("valorBase");
             Files.writeString(arquivo, "[" + objeto + "]");
-            assertThrows(IllegalArgumentException.class, repo::carregar);
+            assertThrows(ArquivoInvalidoException.class, repo::carregar);
             assertSame(consulta, repo.buscar(consulta.getId()));
         } finally {
             Files.deleteIfExists(arquivo);
@@ -159,7 +160,7 @@ public class ConsultaRepositorioJsonTest {
             assertSame(medico, lida.getMedico());
             assertEquals(horario, lida.getDataHora());
             assertEquals(150, lida.calcularValor(), 0.001);
-            assertThrows(IllegalArgumentException.class, () -> new ConsultaRepositorioJson(arquivo.toString(), new RepositorioTeste<>(), medicos));
+            assertThrows(ArquivoInvalidoException.class, () -> new ConsultaRepositorioJson(arquivo.toString(), new RepositorioTeste<>(), medicos));
             lida.setEstrategia(new PrecoParticular());
             repo.atualizar(lida);
             repo.carregar();
@@ -171,7 +172,7 @@ public class ConsultaRepositorioJsonTest {
             assertEquals(passado, repo.buscar(lida.getId()).getDataHora());
             Files.writeString(arquivo, "{}");
             ConsultaRepositorioJson repositorio = repo;
-            assertThrows(IllegalArgumentException.class, repositorio::carregar);
+            assertThrows(ArquivoInvalidoException.class, repositorio::carregar);
             assertEquals(1, repo.listar().size());
             repo.excluir(lida.getId());
             repo.carregar();

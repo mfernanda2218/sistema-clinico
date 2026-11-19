@@ -1,5 +1,6 @@
 package clinica.repository;
 
+import clinica.exception.ArquivoInvalidoException;
 import clinica.interfaces.Repositorio;
 import clinica.model.*;
 import com.google.gson.*;
@@ -23,11 +24,11 @@ public class ConsultaRepositorioJson implements Repositorio<Consulta> {
     private final List<Consulta> consultas = new ArrayList<>();
     private final Gson gson;
 
-    public ConsultaRepositorioJson(Repositorio<Paciente> pacientes, Repositorio<Medico> medicos) {
+    public ConsultaRepositorioJson(Repositorio<Paciente> pacientes, Repositorio<Medico> medicos) throws ArquivoInvalidoException {
         this("dados/consultas.json", pacientes, medicos);
     }
 
-    public ConsultaRepositorioJson(String caminho, Repositorio<Paciente> pacientes, Repositorio<Medico> medicos) {
+    public ConsultaRepositorioJson(String caminho, Repositorio<Paciente> pacientes, Repositorio<Medico> medicos) throws ArquivoInvalidoException {
         if (caminho == null || caminho.isBlank() || pacientes == null || medicos == null) {
             throw new IllegalArgumentException("Informe o arquivo e os repositórios de pacientes e médicos.");
         }
@@ -128,7 +129,7 @@ public class ConsultaRepositorioJson implements Repositorio<Consulta> {
     }
 
     @Override
-    public void carregar() {
+    public void carregar() throws ArquivoInvalidoException {
         if (!Files.exists(arquivo)) {
             return;
         }
@@ -136,12 +137,15 @@ public class ConsultaRepositorioJson implements Repositorio<Consulta> {
         try (Reader reader = Files.newBufferedReader(arquivo, StandardCharsets.UTF_8)) {
             JsonElement raiz = JsonParser.parseReader(reader);
             if (!raiz.isJsonArray()) {
-                throw new IllegalArgumentException("O arquivo deve conter uma lista de consultas.");
+                throw new ArquivoInvalidoException("O arquivo deve conter uma lista de consultas: " + arquivo);
             }
             for (JsonElement elemento : raiz.getAsJsonArray()) {
+                if (!elemento.isJsonObject()) {
+                    throw new ArquivoInvalidoException("Elemento inválido na lista de consultas: " + elemento);
+                }
                 JsonObject objeto = elemento.getAsJsonObject();
                 if (!objeto.has("valorBase") || objeto.get("valorBase").isJsonNull()) {
-                    throw new IllegalArgumentException("Valor da consulta ausente no arquivo.");
+                    throw new ArquivoInvalidoException("Valor da consulta ausente no arquivo: " + arquivo);
                 }
                 Consulta consulta = gson.fromJson(objeto, Consulta.class);
                 consulta.setPaciente(pacientes.buscar(consulta.getCpfPaciente()));
@@ -150,22 +154,23 @@ public class ConsultaRepositorioJson implements Repositorio<Consulta> {
                 if ("Particular".equals(forma)) {
                     consulta.setEstrategia(new PrecoParticular());
                 } else if ("Convênio".equals(forma)) {
+                    if (!objeto.has("percentualDesconto") || objeto.get("percentualDesconto").isJsonNull()) {
+                        throw new ArquivoInvalidoException("Percentual de desconto ausente no arquivo para convênio: " + arquivo);
+                    }
                     consulta.setEstrategia(new PrecoConvenio(objeto.get("percentualDesconto").getAsDouble()));
                 } else {
-                    throw new IllegalArgumentException("Forma de cobrança inválida.");
+                    throw new ArquivoInvalidoException("Forma de cobrança inválida no arquivo: " + forma);
                 }
                 validar(consulta);
                 for (Consulta anterior : carregadas) {
                     if (anterior.getId().equals(consulta.getId())) {
-                        throw new IllegalArgumentException("ID de consulta repetido no arquivo.");
+                        throw new ArquivoInvalidoException("ID de consulta repetido no arquivo: " + consulta.getId());
                     }
                 }
                 carregadas.add(consulta);
             }
-        } catch (IOException e) {
-            throw new UncheckedIOException("Falha ao ler consultas: " + arquivo, e);
-        } catch (RuntimeException e) {
-            throw new IllegalArgumentException("Arquivo de consultas inválido: " + arquivo, e);
+        } catch (JsonParseException | IOException | IllegalArgumentException e) {
+            throw new ArquivoInvalidoException("Arquivo de consultas corrompido ou inválido: " + arquivo, e);
         }
         consultas.clear();
         consultas.addAll(carregadas);
