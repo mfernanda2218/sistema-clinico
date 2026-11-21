@@ -1,0 +1,90 @@
+package clinica.view;
+
+import clinica.exception.ArquivoInvalidoException;
+import clinica.model.Clinico;
+import clinica.model.Consulta;
+import clinica.model.Paciente;
+import clinica.repository.ConsultaRepositorioJson;
+import clinica.repository.MedicoRepositorioJson;
+import clinica.repository.PacienteRepositorioJson;
+import clinica.service.ConsultaService;
+import clinica.service.MedicoService;
+import clinica.service.PacienteService;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+import static org.junit.Assert.*;
+
+public class MainAppTest {
+    @Rule
+    public TemporaryFolder temporaria = new TemporaryFolder();
+
+    private Consulta cadastrarDados(Path pasta) throws Exception {
+        PacienteRepositorioJson pacientes = new PacienteRepositorioJson(pasta.resolve("pacientes.json").toString());
+        MedicoRepositorioJson medicos = new MedicoRepositorioJson(pasta.resolve("medicos.json").toString());
+        ConsultaRepositorioJson consultas = new ConsultaRepositorioJson(pasta.resolve("consultas.json").toString(), pacientes, medicos);
+        pacientes.cadastrar(new Paciente("Ana", "12345678900", "9999", LocalDate.of(2000, 1, 1)));
+        medicos.cadastrar(new Clinico("Bia", "98765432100", "9999", "123"));
+        ConsultaService service = new ConsultaService(consultas, new PacienteService(pacientes), new MedicoService(medicos), 0);
+        return service.agendar("12345678900", "123", LocalDateTime.now().plusDays(1), "Rotina");
+    }
+
+    @Test
+    public void salvaOsTresRepositoriosAoEncerrarEReconectaAoReabrir() throws Exception {
+        Path pasta = temporaria.getRoot().toPath();
+        Consulta original = cadastrarDados(pasta);
+        MainApp app = new MainApp(pasta);
+        app.carregarDados();
+        Files.writeString(pasta.resolve("pacientes.json"), "[]");
+        Files.writeString(pasta.resolve("medicos.json"), "[]");
+        Files.writeString(pasta.resolve("consultas.json"), "[]");
+        app.stop();
+
+        PacienteRepositorioJson pacientes = new PacienteRepositorioJson(pasta.resolve("pacientes.json").toString());
+        MedicoRepositorioJson medicos = new MedicoRepositorioJson(pasta.resolve("medicos.json").toString());
+        ConsultaRepositorioJson consultas = new ConsultaRepositorioJson(pasta.resolve("consultas.json").toString(), pacientes, medicos);
+        Consulta carregada = consultas.buscar(original.getId());
+        assertNotNull(carregada);
+        assertSame(pacientes.buscar("12345678900"), carregada.getPaciente());
+        assertSame(medicos.buscar("123"), carregada.getMedico());
+        assertEquals(original.getDataHora(), carregada.getDataHora());
+        assertEquals(original.calcularValor(), carregada.calcularValor(), 0.001);
+    }
+
+    @Test
+    public void naoSobrescreveArquivosSeCarregamentoFalhar() throws Exception {
+        Path pasta = temporaria.getRoot().toPath();
+        cadastrarDados(pasta);
+        String pacientes = Files.readString(pasta.resolve("pacientes.json"));
+        String medicos = Files.readString(pasta.resolve("medicos.json"));
+        Files.writeString(pasta.resolve("consultas.json"), "invalido");
+        MainApp app = new MainApp(pasta);
+        assertThrows(ArquivoInvalidoException.class, app::carregarDados);
+        app.stop();
+        assertEquals(pacientes, Files.readString(pasta.resolve("pacientes.json")));
+        assertEquals(medicos, Files.readString(pasta.resolve("medicos.json")));
+        assertEquals("invalido", Files.readString(pasta.resolve("consultas.json")));
+    }
+
+    @Test
+    public void tentaSalvarOsOutrosRepositoriosQuandoUmFalha() throws Exception {
+        Path pasta = temporaria.getRoot().toPath();
+        cadastrarDados(pasta);
+        MainApp app = new MainApp(pasta);
+        app.carregarDados();
+        Files.delete(pasta.resolve("medicos.json"));
+        Files.createDirectory(pasta.resolve("medicos.json"));
+        Files.writeString(pasta.resolve("pacientes.json"), "[]");
+        Files.writeString(pasta.resolve("consultas.json"), "[]");
+        IllegalStateException erro = assertThrows(IllegalStateException.class, app::stop);
+        assertEquals(1, erro.getSuppressed().length);
+        assertTrue(Files.readString(pasta.resolve("pacientes.json")).contains("12345678900"));
+        assertTrue(Files.readString(pasta.resolve("consultas.json")).contains("12345678900"));
+    }
+}

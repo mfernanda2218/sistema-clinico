@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -164,9 +165,15 @@ public class MedicoRepositorioJson implements Repositorio<Medico> {
         }
 
         try (FileWriter writer = new FileWriter(arquivo)) {
-            gson.toJson(medicos, writer);
+            JsonArray lista = new JsonArray();
+            for (Medico medico : medicos) {
+                JsonObject objeto = gson.toJsonTree(medico).getAsJsonObject();
+                objeto.addProperty("especialidade", medico.getEspecialidade());
+                lista.add(objeto);
+            }
+            gson.toJson(lista, writer);
         } catch (IOException e) {
-            System.err.println("Erro ao salvar médicos no arquivo: " + e.getMessage());
+            throw new UncheckedIOException("Erro ao salvar médicos no arquivo: " + caminhoArquivo, e);
         }
     }
 }
