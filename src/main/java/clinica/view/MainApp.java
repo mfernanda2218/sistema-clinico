@@ -2,6 +2,9 @@ package clinica.view;
 
 import clinica.exception.ArquivoInvalidoException;
 import clinica.service.ConsultaService;
+import clinica.repository.PacienteRepositorioJson;
+import clinica.repository.MedicoRepositorioJson;
+import clinica.repository.ConsultaRepositorioJson;
 import clinica.service.MedicoService;
 import clinica.service.PacienteService;
 import javafx.application.Application;
@@ -23,45 +26,53 @@ public class MainApp extends Application {
     @Override
     public void start(Stage stage) throws ArquivoInvalidoException {
         TabPane tabPane = new TabPane();
-
-        // ===== Aba Pacientes =====
+        PacienteRepositorioJson pacientes = null;
+        MedicoRepositorioJson medicos = null;
         Tab tabPacientes = new Tab("Pacientes");
         tabPacientes.setClosable(false);
         try {
-            pacienteService = new PacienteService(); // carrega o JSON internamente
+            pacientes = new PacienteRepositorioJson();
+            pacienteService = new PacienteService(pacientes);
             tabPacientes.setContent(new PacienteView(pacienteService));
         } catch (ArquivoInvalidoException e) {
             mostrarAlertaErro("Erro ao carregar pacientes", e.getMessage());
             tabPacientes.setContent(criarPlaceholder(
                     "Não foi possível carregar os pacientes.\nO arquivo está corrompido ou inválido."));
         }
-
-        // ===== Aba Médicos =====
         Tab tabMedicos = new Tab("Médicos");
         tabMedicos.setClosable(false);
         try {
-            medicoService = new MedicoService(); // carrega o JSON internamente
-            // Quando a tela de médicos estiver pronta, troque a linha abaixo:
-            // tabMedicos.setContent(new MedicoView(medicoService));
+            medicos = new MedicoRepositorioJson();
+            medicoService = new MedicoService(medicos);
             tabMedicos.setContent(criarPlaceholder("Tela de Médicos (B) - em construção"));
         } catch (ArquivoInvalidoException e) {
             mostrarAlertaErro("Erro ao carregar médicos", e.getMessage());
             tabMedicos.setContent(criarPlaceholder(
                     "Não foi possível carregar os médicos.\nO arquivo está corrompido ou inválido."));
         }
-
-        // ===== Aba Consultas =====
-        // quando implementar a tela, implementar o try catch
         Tab tabConsultas = new Tab("Consultas");
         tabConsultas.setClosable(false);
-        consultaService = new ConsultaService(null, pacienteService, medicoService, 0); // carrega o JSON internamente
-        // Quando a tela de consultas estiver pronta, troque a linha abaixo:
-        // tabConsultas.setContent(new ConsultaView(consultaService));
-        tabConsultas.setContent(criarPlaceholder("Tela de Consultas (C) - em construção"));
-
+        if (pacientes != null && medicos != null) {
+            try {
+                ConsultaRepositorioJson consultas = new ConsultaRepositorioJson(pacientes, medicos);
+                medicoService = new MedicoService(medicos, consultas);
+                consultaService = new ConsultaService(consultas, pacienteService, medicoService, 0);
+                ConsultaView telaConsultas = new ConsultaView(consultaService, pacienteService, medicoService);
+                tabConsultas.setContent(telaConsultas);
+                tabConsultas.setOnSelectionChanged(e -> {
+                    if (tabConsultas.isSelected()) {
+                        telaConsultas.atualizar();
+                    }
+                });
+                tabMedicos.setContent(new MedicoView(medicoService));
+            } catch (Exception e) {
+                mostrarAlertaErro("Erro ao carregar consultas", e.getMessage());
+                tabConsultas.setContent(criarPlaceholder("Não foi possível carregar as consultas."));
+            }
+        } else {
+            tabConsultas.setContent(criarPlaceholder("Corrija o carregamento de pacientes e médicos para acessar as consultas."));
+        }
         tabPane.getTabs().addAll(tabPacientes, tabMedicos, tabConsultas);
-
-        // ===== Layout principal =====
         BorderPane root = new BorderPane();
         root.setCenter(tabPane);
 
