@@ -50,7 +50,7 @@ public class MainApp extends Application {
         stage.show();
         try {
             carregarDados();
-            PacienteService pacienteService = new PacienteService(pacientes);
+            PacienteService pacienteService = new PacienteService(pacientes, consultas);
             MedicoService medicoService = new MedicoService(medicos, consultas);
             ConsultaService consultaService = new ConsultaService(consultas, pacienteService, medicoService, 0);
             root.setCenter(new NavegacaoView(pacienteService, medicoService, consultaService));
