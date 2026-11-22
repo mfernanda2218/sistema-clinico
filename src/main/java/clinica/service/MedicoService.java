@@ -98,7 +98,7 @@ public class MedicoService {
 	        Medico medico = buscarPorCrm(crm);
 
 	        if (possuiConsultasAgendadas(medico.getCrm())) {
-	            throw new IllegalStateException("Não é possível excluir o médico pois ele possui consultas futuras agendadas.");
+            throw new IllegalStateException("Não é possível excluir o médico pois ele possui consultas registradas.");
 	        }
 
 	        repositorio.excluir(medico.getCrm());
@@ -109,11 +109,8 @@ public class MedicoService {
 	            return false;
 	        }
 
-	        LocalDateTime agora = LocalDateTime.now();
 	        return repositorioConsulta.listar().stream()
-	                .anyMatch(c -> crm.equalsIgnoreCase(c.getCrmMedico())
-	                        && c.getDataHora() != null
-	                        && c.getDataHora().isAfter(agora));
+                .anyMatch(c -> crm.equalsIgnoreCase(c.getCrmMedico()));
 	    }
 	}
 	

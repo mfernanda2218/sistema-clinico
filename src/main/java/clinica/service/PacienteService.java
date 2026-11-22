@@ -4,6 +4,7 @@ import clinica.exception.ArquivoInvalidoException;
 import clinica.exception.PacienteNaoEncontradoException;
 import clinica.interfaces.Repositorio;
 import clinica.model.Paciente;
+import clinica.model.Consulta;
 import clinica.repository.PacienteRepositorioJson;
 
 import java.util.List;
@@ -11,16 +12,22 @@ import java.util.List;
 public class PacienteService {
 
     private final Repositorio<Paciente> repositorio;
+    private final Repositorio<Consulta> consultas;
 
     public PacienteService() throws ArquivoInvalidoException {
         this(new PacienteRepositorioJson());
     }
 
     public PacienteService(Repositorio<Paciente> repositorio) {
+        this(repositorio, null);
+    }
+
+    public PacienteService(Repositorio<Paciente> repositorio, Repositorio<Consulta> consultas) {
         if (repositorio == null) {
             throw new IllegalArgumentException("Repositório não pode ser nulo.");
         }
         this.repositorio = repositorio;
+        this.consultas = consultas;
     }
 
     public void cadastrar(Paciente paciente) {
@@ -64,6 +71,11 @@ public class PacienteService {
             throw new IllegalArgumentException("CPF não pode ser nulo ou vazio.");
         }
 
+        Paciente paciente = buscarPorCpf(cpf);
+        if (consultas != null && consultas.listar().stream()
+                .anyMatch(c -> paciente.getCpf().equals(c.getCpfPaciente()))) {
+            throw new IllegalStateException("Não é possível excluir o paciente pois ele possui consultas registradas.");
+        }
         try {
             repositorio.excluir(cpf);
         } catch (IllegalArgumentException e) {

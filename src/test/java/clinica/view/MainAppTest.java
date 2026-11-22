@@ -25,6 +25,38 @@ public class MainAppTest {
     @Rule
     public TemporaryFolder temporaria = new TemporaryFolder();
 
+    @Test
+    public void impedeExcluirReferenciasDeConsultasFuturasEPassadas() throws Exception {
+        for (boolean passada : new boolean[]{false, true}) {
+            Path pasta = temporaria.newFolder().toPath();
+            Consulta original = cadastrarDados(pasta);
+            Path arquivo = pasta.resolve("consultas.json");
+            if (passada) {
+                String json = Files.readString(arquivo);
+                Files.writeString(arquivo, json.replace(original.getDataHora().toString(),
+                        original.getDataHora().minusDays(2).toString()));
+            }
+            PacienteRepositorioJson pacientes = new PacienteRepositorioJson(pasta.resolve("pacientes.json").toString());
+            MedicoRepositorioJson medicos = new MedicoRepositorioJson(pasta.resolve("medicos.json").toString());
+            ConsultaRepositorioJson consultas = new ConsultaRepositorioJson(arquivo.toString(), pacientes, medicos);
+            assertEquals(passada, consultas.buscar(original.getId()).getDataHora().isBefore(LocalDateTime.now()));
+            PacienteService ps = new PacienteService(pacientes, consultas);
+            MedicoService ms = new MedicoService(medicos, consultas);
+            assertThrows(IllegalStateException.class, () -> ps.excluir("123.456.789-00"));
+            assertThrows(IllegalStateException.class, () -> ms.excluir("123"));
+            pacientes.carregar();
+            medicos.carregar();
+            consultas.carregar();
+            assertNotNull(consultas.buscar(original.getId()).getPaciente());
+            assertNotNull(consultas.buscar(original.getId()).getMedico());
+            consultas.excluir(original.getId());
+            ps.excluir("12345678900");
+            ms.excluir("123");
+            assertTrue(pacientes.listar().isEmpty());
+            assertTrue(medicos.listar().isEmpty());
+        }
+    }
+
     private Consulta cadastrarDados(Path pasta) throws Exception {
         PacienteRepositorioJson pacientes = new PacienteRepositorioJson(pasta.resolve("pacientes.json").toString());
         MedicoRepositorioJson medicos = new MedicoRepositorioJson(pasta.resolve("medicos.json").toString());
