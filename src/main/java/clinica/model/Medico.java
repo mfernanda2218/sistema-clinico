@@ -3,9 +3,13 @@ package clinica.model;
 import clinica.interfaces.Agendavel;
 import clinica.exception.HorarioIndisponivelException;
 import java.time.LocalDateTime;
+import java.util.Locale;
 import java.util.TreeMap;
+import java.util.regex.Pattern;
 
 public abstract class Medico extends Pessoa implements Agendavel {
+    private static final Pattern CRM_PATTERN = Pattern.compile("\\d{4,6}(-[A-Z]{2})?");
+
     private String crm;
     private final transient TreeMap<LocalDateTime, Consulta> agenda;
 
@@ -15,11 +19,20 @@ public abstract class Medico extends Pessoa implements Agendavel {
         this.agenda = new TreeMap<>();
     }
 
+    public static boolean crmValido(String crm) {
+        return crm != null
+                && CRM_PATTERN.matcher(crm.trim().toUpperCase(Locale.ROOT)).matches();
+    }
+
     public void setCrm(String crm) {
         if (crm == null || crm.isBlank()) {
             throw new IllegalArgumentException("CRM não pode ser vazio.");
         }
         String crmLimpo = crm.trim();
+        if (!crmValido(crmLimpo)) {
+            throw new IllegalArgumentException(
+                    "CRM inválido. Use de 4 a 6 dígitos, opcionalmente seguido da UF (ex.: 123456-SP).");
+        }
         if (this.crm != null && !this.crm.equals(crmLimpo)) {
             throw new IllegalStateException("CRM não pode ser alterado após o cadastro.");
         }

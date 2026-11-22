@@ -44,8 +44,8 @@ public class ConsultaServiceTest {
         consultas = new Memoria<>();
         medicos = new Memoria<>();
         pacientes = new Memoria<>();
-        paciente = new Paciente("Ana", "52998224725", "9999", LocalDate.of(2000, 1, 1), "Unimed");
-        medico = new Clinico("Bia", "11144477735", "9999", "123");
+        paciente = new Paciente("Ana", "52998224725", "81999990001", LocalDate.of(2000, 1, 1), "Unimed");
+        medico = new Clinico("Bia", "11144477735", "81999990001", "1234");
         pacientes.cadastrar(paciente);
         medicos.cadastrar(medico);
         service = new ConsultaService(consultas, new PacienteService(pacientes), new MedicoService(medicos), 20);
@@ -61,7 +61,7 @@ public class ConsultaServiceTest {
         assertThrows(HorarioIndisponivelException.class,
                 () -> service.agendar(paciente.getCpf(), medico.getCrm(), horario, "Retorno"));
         assertEquals(1, consultas.listar().size());
-        Medico outro = new Pediatra("Caio", "39053344705", "9999", "456");
+        Medico outro = new Pediatra("Caio", "39053344705", "81999990001", "4567");
         medicos.cadastrar(outro);
         service.agendar(paciente.getCpf(), outro.getCrm(), horario, "Rotina");
         assertEquals(2, consultas.listar().size());
@@ -79,7 +79,7 @@ public class ConsultaServiceTest {
 
     @Test
     public void exigeCadastrosExistentes() {
-        assertThrows(PacienteNaoEncontradoException.class, () -> service.agendar("00000000000", "123", horario, "Rotina"));
+        assertThrows(PacienteNaoEncontradoException.class, () -> service.agendar("00000000000", "1234", horario, "Rotina"));
         assertThrows(MedicoNaoEncontradoException.class, () -> service.agendar(paciente.getCpf(), "000", horario, "Rotina"));
         assertTrue(consultas.listar().isEmpty());
     }
@@ -87,7 +87,7 @@ public class ConsultaServiceTest {
     @Test
     public void liberaHorarioQuandoGravacaoFalha() {
         consultas.falhar = true;
-        assertThrows(IllegalStateException.class, () -> service.agendar(paciente.getCpf(), "123", horario, "Rotina"));
+        assertThrows(IllegalStateException.class, () -> service.agendar(paciente.getCpf(), "1234", horario, "Rotina"));
         assertTrue(medico.estaDisponivel(horario));
     }
 
@@ -95,7 +95,7 @@ public class ConsultaServiceTest {
     public void verificaConsultasCarregadasMesmoSemAgendaEmMemoria() throws Exception {
         consultas.cadastrar(new Consulta(paciente, medico, horario, "Rotina", 150));
         assertTrue(medico.getAgenda().isEmpty());
-        assertThrows(HorarioIndisponivelException.class, () -> service.agendar(paciente.getCpf(), "123", horario, "Rotina"));
-        assertEquals(1, service.listarAgenda("123").size());
+        assertThrows(HorarioIndisponivelException.class, () -> service.agendar(paciente.getCpf(), "1234", horario, "Rotina"));
+        assertEquals(1, service.listarAgenda("1234").size());
     }
 }

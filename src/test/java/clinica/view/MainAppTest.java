@@ -44,7 +44,7 @@ public class MainAppTest {
             PacienteService ps = new PacienteService(pacientes, consultas);
             MedicoService ms = new MedicoService(medicos, consultas);
             assertThrows(IllegalStateException.class, () -> ps.excluir("529.982.247-25"));
-            assertThrows(IllegalStateException.class, () -> ms.excluir("123"));
+            assertThrows(IllegalStateException.class, () -> ms.excluir("1234"));
             pacientes.carregar();
             medicos.carregar();
             consultas.carregar();
@@ -52,7 +52,7 @@ public class MainAppTest {
             assertNotNull(consultas.buscar(original.getId()).getMedico());
             consultas.excluir(original.getId());
             ps.excluir("52998224725");
-            ms.excluir("123");
+            ms.excluir("1234");
             assertTrue(pacientes.listar().isEmpty());
             assertTrue(medicos.listar().isEmpty());
         }
@@ -62,10 +62,10 @@ public class MainAppTest {
         PacienteRepositorioJson pacientes = new PacienteRepositorioJson(pasta.resolve("pacientes.json").toString());
         MedicoRepositorioJson medicos = new MedicoRepositorioJson(pasta.resolve("medicos.json").toString());
         ConsultaRepositorioJson consultas = new ConsultaRepositorioJson(pasta.resolve("consultas.json").toString(), pacientes, medicos);
-        pacientes.cadastrar(new Paciente("Ana", "52998224725", "9999", LocalDate.of(2000, 1, 1)));
-        medicos.cadastrar(new Clinico("Bia", "11144477735", "9999", "123"));
+        pacientes.cadastrar(new Paciente("Ana", "52998224725", "81999990001", LocalDate.of(2000, 1, 1)));
+        medicos.cadastrar(new Clinico("Bia", "11144477735", "81999990001", "1234"));
         ConsultaService service = new ConsultaService(consultas, new PacienteService(pacientes), new MedicoService(medicos), 0);
-        return service.agendar("52998224725", "123", LocalDateTime.now().plusDays(1), "Rotina");
+        return service.agendar("52998224725", "1234", LocalDateTime.now().plusDays(1), "Rotina");
     }
 
     @Test
@@ -85,7 +85,7 @@ public class MainAppTest {
         Consulta carregada = consultas.buscar(original.getId());
         assertNotNull(carregada);
         assertSame(pacientes.buscar("52998224725"), carregada.getPaciente());
-        assertSame(medicos.buscar("123"), carregada.getMedico());
+        assertSame(medicos.buscar("1234"), carregada.getMedico());
         assertEquals(original.getDataHora(), carregada.getDataHora());
         assertEquals(original.calcularValor(), carregada.calcularValor(), 0.001);
     }
