@@ -1,15 +1,94 @@
 # Sistema Clínico
- 
+
 Projeto final de Programação Orientada a Objetos (UFAL Arapiraca): CRUD de **Pacientes**, **Médicos** e **Consultas** em Java, com interface JavaFX e persistência em JSON.
- 
+
 **Equipe:** Maria Fernanda · Giovanna Sophia · Luan Henrique
- 
-> Este README é um documento vivo. Esta versão cobre a issue **#2** (UML e contratos). A issue **#35** o completa com as instruções de execução.
- 
+
 ---
- 
-## 1. Estrutura de pacotes
- 
+
+## 1. Como rodar
+
+### Pré-requisitos
+
+| Ferramenta | Versão |
+|---|---|
+| JDK | **21 ou superior** (o projeto compila com `release 21`; testado também em JDK 26) |
+| Apache Maven | 3.6+ |
+| JavaFX | **21.0.5** (gerenciado pelo `pom.xml`, não precisa instalar separadamente) |
+
+Verifique com `java -version` e `mvn -version`.
+
+### Passo a passo
+
+```bash
+# 1. Clone o repositório
+git clone https://github.com/mfernanda2218/sistema-clinico.git
+cd sistema-clinico
+
+# 2. Compile o projeto
+mvn clean compile
+
+# 3. Rode a aplicação (interface gráfica)
+mvn javafx:run
+```
+
+A janela "Sistema Clínico - UFAL Arapiraca" abre com três abas: **Pacientes**, **Médicos** e **Consultas**.
+
+> **Não é preciso baixar JavaFX manualmente.** As dependências `org.openjfx:javafx-controls` e `javafx-fxml` (21.0.5) são resolvidas pelo Maven e incluídas no classpath automaticamente.
+
+### Executar os testes
+
+```bash
+mvn test
+```
+
+São 30 testes (JUnit 4) cobrindo modelo, repositórios JSON, services e telas.
+
+### Executar o fluxo de demonstração (console)
+
+```bash
+mvn compile exec:java -Dexec.mainClass=clinica.demo.FluxoCompletoMain
+```
+
+O demo cadastra um paciente e um médico, agenda consultas, cancela uma e simula um reinício relendo os JSONs.
+
+> **Atenção:** o demo falha com `Paciente com CPF já cadastrado` se a pasta `dados/` já contiver esses registros. Apague `dados/` antes de rodar novamente, ou use os CPFs já cadastrados.
+
+---
+
+## 2. Onde ficam os dados (JSONs)
+
+Os dados são persistidos em arquivos JSON dentro da pasta **`dados/`**, criada automaticamente na raiz do projeto na primeira gravação:
+
+```
+dados/
+├── pacientes.json   # Paciente + Prontuario + Registro aninhados
+├── medicos.json     # Medico + especialidade
+└── consultas.json   # Consulta (referências por cpfPaciente/crmMedico)
+```
+
+- O diretório `dados/` está no `.gitignore` — **dados de execução nunca são versionados**.
+- Os arquivos são gravados a cada operação (cadastrar/atualizar/excluir) e relidos na inicialização — o sistema é resiliente a fechamento sem "salvar".
+- `MainApp` aceita um `Path` customizado no construtor (usado pelos testes com pasta temporária); o default é `dados/` relativo ao diretório de trabalho.
+- Se um JSON estiver corrompido, o sistema lança `ArquivoInvalidoException` na carga e **não sobrescreve** o arquivo.
+
+---
+
+## 3. Tecnologias
+
+| Componente | Versão / Tecnologia |
+|---|---|
+| Linguagem | Java **21** (`maven.compiler.release=21`) |
+| UI | JavaFX **21.0.5** (controls + FXML deps; telas montadas em código, sem arquivos `.fxml`) |
+| Persistência | JSON via Gson **2.11.0** |
+| Build | Apache Maven (`maven-compiler-plugin` 3.13.0) |
+| Testes | JUnit **4.13.2** |
+| Plugins | `javafx-maven-plugin` 0.0.8, `exec-maven-plugin` 3.5.0 |
+
+---
+
+## 4. Estrutura de pacotes
+
 | Pacote | Conteúdo |
 |---|---|
 | `clinica.model` | `Pessoa`, `Paciente`, `Prontuario`, `Registro`, `Medico` e subclasses, `Consulta`, estratégias de preço |
@@ -17,16 +96,18 @@ Projeto final de Programação Orientada a Objetos (UFAL Arapiraca): CRUD de **P
 | `clinica.exception` | Exceptions do domínio e da persistência |
 | `clinica.repository` | Implementações de `Repositorio<T>` (memória e JSON) |
 | `clinica.service` | Regras de negócio, `MedicoFactory` |
-| `clinica.view` | Telas JavaFX (controllers + FXML) |
- 
-Fluxo de dependência: `view → service → repository → arquivos JSON`. A `view` nunca acessa o `repository` diretamente.
- 
+| `clinica.util` | `AlertaUtil` (dialogs JavaFX) e `ValidadorUtil` (regras de formulário) |
+| `clinica.view` | Telas JavaFX (`MainApp`, `NavegacaoView`, `PacienteView`, `MedicoView`, `ConsultaView`) |
+| `clinica.demo` | `MainDemo` e `FluxoCompletoMain` — fluxo de verificação manual em console |
+
+Fluxo de dependência: `view → service → repository → arquivos JSON`. A `view` nunca acessa o `repository` diretamente; `util` e `demo` são folhas (não são usados pelas camadas de negócio).
+
 ---
- 
-## 2. Diagramas de classes
- 
-### 2.1 Domínio (model, interfaces, Factory e Strategy)
- 
+
+## 5. Diagramas de classes
+
+### 5.1 Domínio (model, interfaces, Factory e Strategy)
+
 ```mermaid
 classDiagram
     class Pessoa {
@@ -38,6 +119,7 @@ classDiagram
         +getCpf() String
         +getTelefone() String
         +getDescricaoPerfil()* String
+        +cpfValido(String cpf)$ boolean
     }
  
     class Paciente {
@@ -48,6 +130,7 @@ classDiagram
         +setConvenio(String convenio) void
         +isParticular() boolean
         +getProntuario() Prontuario
+        +convenioValido(String convenio)$ boolean
         +getDescricaoPerfil() String
     }
  
@@ -75,6 +158,10 @@ classDiagram
         +reservar(Consulta consulta) void
         +liberar(LocalDateTime horario) void
         +getAgenda() TreeMap
+        +possuiReserva(Consulta consulta) boolean
+        +atualizarHorario(Consulta consulta, LocalDateTime novoHorario) void
+        +registrarReserva(Consulta consulta) void
+        +limparAgenda() void
     }
  
     class Clinico {
@@ -143,6 +230,7 @@ classDiagram
         +setDataHora(LocalDateTime dataHora) void
         +calcularValor() double
         +getFormaCobranca() String
+        +copiarParaHorario(LocalDateTime novoHorario) Consulta
     }
  
     class MedicoFactory {
@@ -170,15 +258,16 @@ classDiagram
  
     MedicoFactory ..> Medico : cria
 ```
- 
-**Notas:**
-- `Medico.agenda` é `transient`: não vai para o JSON. O `Medico` implementa `Agendavel` (4 métodos: `estaDisponivel`, `reservar`, `liberar` e `getAgenda`), mantendo a responsabilidade e o encapsulamento dos seus próprios horários. O `ConsultaService` delega a validação de horários ao médico.
-- `Consulta` tem `id` próprio (`UUID` em texto), permitindo identificação estável e uso unificado de `Repositorio.buscar(String id)`.
-- `Consulta` associa-se por objeto a `Paciente` e `Medico` (ambos `transient`). No JSON persistem-se apenas `cpfPaciente` e `crmMedico`; ao carregar, o repositório/service reconecta os objetos reais.
-- `formaCobranca` é persistida como texto (`"Particular"` ou `"Convênio"` acompanhada de `percentualDesconto`), e a respectiva `EstrategiaPreco` é reconstruída na leitura.
 
-### 2.2 Persistência, serviços e telas
- 
+**Notas:**
+- `Medico.agenda` é `transient`: não vai para o JSON. O `Medico` implementa `Agendavel`, mantendo a responsabilidade e o encapsulamento dos seus próprios horários. `registrarReserva()`/`limparAgenda()` existem para o `ConsultaRepositorioJson` reconstruir a agenda em memória ao carregar o arquivo — sem isso, a agenda ficaria vazia após reiniciar o app.
+- `Consulta` tem `id` próprio (`UUID` em texto), com `equals`/`hashCode` baseados nele, permitindo identificação estável e uso unificado de `Repositorio.buscar(String id)`.
+- `Consulta` associa-se por objeto a `Paciente` e `Medico` (ambos `transient`). No JSON persistem-se apenas `cpfPaciente` e `crmMedico`; ao carregar, o repositório reconecta os objetos reais.
+- `formaCobranca` é persistida como texto (`"Particular"` ou `"Convênio"` acompanhada de `percentualDesconto`), e a respectiva `EstrategiaPreco` é reconstruída na leitura.
+- `Pessoa.cpfValido()` valida CPF por dígitos verificadores (módulo 11) e é usada tanto no setter quanto na carga do JSON e nos formulários.
+
+### 5.2 Persistência, serviços e telas
+
 ```mermaid
 classDiagram
     class Repositorio {
@@ -256,8 +345,8 @@ classDiagram
         +criar(String especialidade, String nome, String cpf, String telefone, String crm)$ Medico
     }
  
-    class Controllers {
-        <<pacote view>>
+    class Views {
+        <<pacote view + util + demo>>
     }
  
     Repositorio <|.. PacienteRepositorioMemoria : T = Paciente
@@ -276,25 +365,26 @@ classDiagram
     MedicoService ..> MedicoFactory : cria via
     MedicoRepositorioJson ..> MedicoFactory : reconstrói na leitura
  
-    Controllers --> PacienteService
-    Controllers --> MedicoService
-    Controllers --> ConsultaService
+    Views --> PacienteService
+    Views --> MedicoService
+    Views --> ConsultaService
 ```
- 
+
 **Notas:**
 - No `pacientes.json`, o prontuário e seus registros ficam aninhados dentro do paciente.
-- `ConsultaRepositorioJson` usa um `TypeAdapter` para `LocalDateTime` e recebe instâncias de `Repositorio<Paciente>` e `Repositorio<Medico>` para reconstruir a associação por objetos.
-- **Singleton:** Mantido exclusivamente em `PacienteRepositorioMemoria` para atender ao requisito acadêmico de padrões de projeto. Os repositórios JSON **não** são Singletons com construtor privado, garantindo testabilidade isolada com arquivos temporários e injeção de dependências.
-- **Tratamento de Exceções:** Repositórios lançam `IllegalArgumentException` (para ID duplicado ou inexistente); os *services* traduzem para as exceções de domínio (`PacienteNaoEncontradoException`, `MedicoNaoEncontradoException`, `ConsultaNaoEncontradaException`).
+- `ConsultaRepositorioJson` usa um `TypeAdapter` para `LocalDateTime`, grava em arquivo temporário + `ATOMIC_MOVE` (evita JSON truncado em queda) e recebe instâncias de `Repositorio<Paciente>` e `Repositorio<Medico>` para reconstruir a associação por objetos e a agenda dos médicos.
+- **Singleton:** Mantido exclusivamente em `PacienteRepositorioMemoria` para atender ao requisito acadêmico de padrões de projeto. Os repositórios JSON **não** são Singletons, garantindo testabilidade isolada com arquivos temporários e injeção de dependências.
+- **Tratamento de Exceções:** Repositórios lançam `IllegalArgumentException` (para ID duplicado ou inexistente); os *services* traduzem para as exceções de domínio (`PacienteNaoEncontradoException`, `MedicoNaoEncontradoException`, `ConsultaNaoEncontradaException`). Validações de entrada no `model` usam `IllegalArgumentException`.
 - **Persistência (`carregar()` e `salvar()`):** Métodos `default` na interface `Repositorio<T>` garantem suporte à persistência nos repositórios JSON sem onerar o repositório em memória.
+
 ---
- 
-## 3. Contratos (assinaturas fixadas)
- 
-Estes são os contratos que **não mudam sem avisar os três**. O que está dentro dos métodos fica livre.
- 
-### 3.1 Classes abstratas
- 
+
+## 6. Contratos (assinaturas fixadas)
+
+Estes são os contratos definidos no início da implementação do projeto.
+
+### 6.1 Classes abstratas
+
 ```java
 // clinica.model
 public abstract class Pessoa {
@@ -308,9 +398,9 @@ public abstract class Medico extends Pessoa implements Agendavel {
     public abstract double getValorConsulta();   // valor base próprio de cada especialidade
 }
 ```
- 
+
 #### Associação da `Consulta` (por objeto)
- 
+
 ```java
 public class Consulta implements Cobravel {
     private String id;
@@ -321,9 +411,9 @@ public class Consulta implements Cobravel {
     // ... dataHora, tipo, valorBase, formaCobranca, estrategia
 }
 ```
- 
-### 3.2 Interfaces
- 
+
+### 6.2 Interfaces
+
 ```java
 // clinica.interfaces
 public interface Agendavel {
@@ -346,18 +436,18 @@ public interface EstrategiaPreco {
 public interface Repositorio<T> {
     void cadastrar(T entidade);                       // IllegalArgumentException se o id já existe
     List<T> listar();                                 // devolve cópia, nunca a lista interna
-    Optional<T> buscar(String id);                    // id = CPF | CRM | id da consulta
+    T buscar(String id);                              // id = CPF | CRM | id da consulta; null se não existir
     void atualizar(T entidade);                       // IllegalArgumentException se o id não existe
     void excluir(String id);                          // IllegalArgumentException se o id não existe
     void carregar() throws ArquivoInvalidoException;  // no JSON lê o arquivo; na memória não faz nada
-    void salvar() throws ArquivoInvalidoException;    // no JSON grava o arquivo; na memória não faz nada
+    void salvar();                                    // no JSON grava o arquivo; na memória não faz nada
 }
 ```
- 
+
 Falha de escrita em disco vira `UncheckedIOException` (não polui a assinatura dos métodos de CRUD).
- 
-### 3.3 Factory
- 
+
+### 6.3 Factory
+
 ```java
 // clinica.service
 public class MedicoFactory {
@@ -366,13 +456,8 @@ public class MedicoFactory {
     // especialidade desconhecida -> IllegalArgumentException (nunca devolve null)
 }
 ```
- 
-### 3.4 Services (o que a view enxerga)
 
-Na issue #6, `PacienteNaoEncontradoException` fica definida para ser lançada
-por `PacienteService.buscarPorCpf` quando a busca não encontrar o CPF, com a
-mensagem `Paciente não encontrado para o CPF: <cpf>`. A implementação do service
-deverá seguir esse contrato; a view deverá capturar a exceção e exibir a mensagem.
+### 6.4 Services (o que a view enxerga)
 
 `Paciente.setConvenio` e o construtor com convênio lançam
 `ConvenioInvalidoException` para texto vazio ou nome fora de `CONVENIOS_ACEITOS`.
@@ -415,36 +500,52 @@ public class ConsultaService {
     public List<Consulta> listarPorData(LocalDate data);
 }
 ```
- 
-### 3.5 Exceptions (todas *checked*, estendem `Exception`)
- 
-| Exception | Quem lança | Quando | Issue |
-|---|---|---|---|
-| `PacienteNaoEncontradoException` | `PacienteService`, `ConsultaService` | CPF inexistente | #6 |
-| `ConvenioInvalidoException` | `Paciente` (construtor e `setConvenio`) | convênio vazio ou fora da lista aceita (constante em `Paciente`) | #6 |
-| `MedicoNaoEncontradoException` | `MedicoService`, `ConsultaService` | CRM inexistente | #19 (nova) |
-| `ConsultaNaoEncontradaException` | `ConsultaService` | id de consulta inexistente | #24 (nova) |
-| `HorarioIndisponivelException` | `Medico.reservar`, propagada por `ConsultaService` | médico já tem consulta no horário | #14 |
-| `ArquivoInvalidoException` | `carregar()` dos repositórios JSON | JSON existe, mas está corrompido | #27 |
- 
+
+### 6.5 Exceptions
+
+Exceções de domínio são *checked* (estendem `Exception`); erros de entrada no `model` usam `IllegalArgumentException` (não checked).
+
+| Exception | Quem lança | Quando |
+|---|---|---|
+| `PacienteNaoEncontradoException` | `PacienteService`, `ConsultaService` | CPF inexistente |
+| `ConvenioInvalidoException` | `Paciente` (construtor e `setConvenio`) | convênio vazio ou fora da lista aceita |
+| `MedicoNaoEncontradoException` | `MedicoService`, `ConsultaService` | CRM inexistente |
+| `ConsultaNaoEncontradaException` | `ConsultaService` | id de consulta inexistente |
+| `HorarioIndisponivelException` | `Medico.reservar`, propagada por `ConsultaService` | médico já tem consulta no horário |
+| `ArquivoInvalidoException` | `carregar()` dos repositórios JSON | JSON existe, mas está corrompido/inconsistente |
+
 Na interface, toda exception é capturada e mostrada em `Alert`, sem stack trace.
- 
+
 ---
- 
-## 4. Onde cada conceito de O.O. aparece
- 
+
+## 7. Onde cada conceito de O.O. aparece
+
 | Conceito | Onde |
 |---|---|
 | Classes e objetos | Todo o `model`; construtores com validação |
 | Herança e polimorfismo | `Pessoa → Paciente/Medico`; `Medico → Clinico/Pediatra/Cardiologista` (`getValorConsulta()`, `getEspecialidade()`) |
 | Modificadores e encapsulamento | Atributos `private`, `protected` só nas hierarquias, constantes `static final` |
-| Exception | Tabela da seção 3.5 |
+| Exception | Tabela da seção 6.5 |
 | Classe abstrata e interface | `Pessoa`, `Medico`; `Agendavel`, `Cobravel`, `EstrategiaPreco`, `Repositorio<T>` |
 | Associação e composição | `Paciente ◆ Prontuario ◆ Registro` (composição); `Consulta` associa `Paciente` e `Medico` por referência de objeto (CPF/CRM só no JSON) |
 | Estruturas de dados | `ArrayList`, `HashMap` (índice por CPF), `TreeMap` (agenda ordenada) |
 | Padrões de projeto | Singleton (`PacienteRepositorioMemoria`), Factory (`MedicoFactory`), Strategy (`EstrategiaPreco`) |
- 
-## Roteiro de Teste de Persistência (Issue #26)
+
+---
+
+## 8. Quem fez o quê
+
+| Integrante | Área de maior contribuição |
+|---|---|
+| **Maria Fernanda** | Persistência (`repository`), services e telas |
+| **Giovanna Sophia** | Telas JavaFX e partes do domínio (`model`) |
+| **Luan Henrique** | Domínio (`model`) e suíte de testes |
+
+> Contribuições distribuídas em todas as camadas — a tabela resume a área de maior volume de commits de cada integrante.
+
+---
+
+## 9. Roteiro de Teste de Persistência
 
 Este roteiro valida se os dados das três entidades (Paciente, Médico e Consulta) 
 sobrevivem ao ciclo: **cadastrar → fechar o aplicativo → reabrir**.
