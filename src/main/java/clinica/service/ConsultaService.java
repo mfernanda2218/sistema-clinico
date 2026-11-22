@@ -1,6 +1,5 @@
 package clinica.service;
 
-import clinica.exception.ConvenioInvalidoException;
 import clinica.exception.ConsultaNaoEncontradaException;
 import clinica.exception.HorarioIndisponivelException;
 import clinica.exception.MedicoNaoEncontradoException;
@@ -34,10 +33,9 @@ public class ConsultaService {
 
     public Consulta agendar(String cpfPaciente, String crmMedico, LocalDateTime dataHora, String tipo)
             throws PacienteNaoEncontradoException, MedicoNaoEncontradoException,
-            ConvenioInvalidoException, HorarioIndisponivelException {
+            HorarioIndisponivelException {
         Paciente paciente = pacientes.buscarPorCpf(cpfPaciente);
         Medico medico = medicos.buscarPorCrm(crmMedico);
-        paciente.setConvenio(paciente.getConvenio());
         EstrategiaPreco estrategia = new PrecoParticular();
         if (!paciente.isParticular()) {
             estrategia = new PrecoConvenio(descontoConvenio);

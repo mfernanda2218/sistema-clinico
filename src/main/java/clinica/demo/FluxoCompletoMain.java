@@ -1,4 +1,4 @@
-package clinica.view;
+package clinica.demo;
 
 public class FluxoCompletoMain {
     public static void main(String[] args) {

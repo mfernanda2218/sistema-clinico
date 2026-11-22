@@ -1,12 +1,8 @@
-package clinica.exception;
+package clinica.util;
 
 import clinica.exception.HorarioIndisponivelException;
-import clinica.exception.MedicoNaoEncontradoException;
-import clinica.exception.PacienteNaoEncontradoException;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
-
-import java.util.Optional;
 
 
 public final class AlertaUtil {
@@ -14,6 +10,10 @@ public final class AlertaUtil {
 	private AlertaUtil() {
 		//evita instanciação
 	}
+	public static void erro(String titulo, String mensagem) {
+		exibir(Alert.AlertType.ERROR, titulo, null, tratarMensagem(mensagem));
+	}
+
 	public static void erro(String titulo, Exception e) {
         String cabecalho = null;
         if (e instanceof HorarioIndisponivelException) {
@@ -36,8 +36,8 @@ public final class AlertaUtil {
         alert.setHeaderText(cabecalho);
         alert.setContentText(mensagem);
 
-        Optional<ButtonType> resultado = alert.showAndWait();
-        return resultado.isPresent() && resultado.get() == ButtonType.OK;
+        ButtonType resultado = alert.showAndWait().orElse(null);
+        return resultado == ButtonType.OK;
     }
 
     private static void exibir(Alert.AlertType tipo, String titulo, String cabecalho, String mensagem) {
@@ -54,12 +54,4 @@ public final class AlertaUtil {
         }
         return mensagem;
     }
-
-public static void marcarInvalido(javafx.scene.control.Control campo, boolean invalido) {
-    if (invalido) {
-        campo.setStyle("-fx-border-color: #d32f2f; -fx-border-width: 1.5px; -fx-border-radius: 3px;");
-    } else {
-        campo.setStyle(null);
-    }
-}
 }

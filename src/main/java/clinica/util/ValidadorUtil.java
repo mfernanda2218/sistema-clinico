@@ -1,4 +1,7 @@
-package clinica.view;
+package clinica.util;
+
+import clinica.model.Pessoa;
+import javafx.scene.control.Control;
 
 import java.time.LocalDate;
 
@@ -15,7 +18,7 @@ public final class ValidadorUtil {
     }
 
     public static boolean isCpfValido(String cpf) {
-        return isTextoValido(cpf) && cpf.trim().matches(REGEX_CPF);
+        return isTextoValido(cpf) && Pessoa.cpfValido(cpf);
     }
 
     public static boolean isCrmValido(String crm) {
@@ -32,5 +35,13 @@ public final class ValidadorUtil {
 
     public static boolean isHoraValida(String hora) {
         return isTextoValido(hora) && hora.trim().matches(REGEX_HORA);
+    }
+
+    public static void marcarInvalido(Control campo, boolean invalido) {
+        if (invalido) {
+            campo.setStyle("-fx-border-color: #d32f2f; -fx-border-width: 1.5px; -fx-border-radius: 3px;");
+        } else {
+            campo.setStyle(null);
+        }
     }
 }

@@ -33,7 +33,7 @@ public class MedicoService {
         this.repositorioConsulta = repositorioConsulta;
     }
 	
-	public Medico cadastrar(String especialidade, String nome, String cpf, String telefone, String crm) throws MedicoNaoEncontradoException {
+	public Medico cadastrar(String especialidade, String nome, String cpf, String telefone, String crm) {
         if (crm == null || crm.isBlank()) {
             throw new IllegalArgumentException("O campo CRM não pode ser vazio.");
         }

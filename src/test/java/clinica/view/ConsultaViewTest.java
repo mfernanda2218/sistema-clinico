@@ -22,13 +22,13 @@ public class ConsultaViewTest {
         try {
             PacienteRepositorioJson pacientes = new PacienteRepositorioJson(pasta.resolve("pacientes.json").toString());
             MedicoRepositorioJson medicos = new MedicoRepositorioJson(pasta.resolve("medicos.json").toString());
-            pacientes.cadastrar(new Paciente("Ana", "12345678900", "9999", LocalDate.of(2000, 1, 1), "Unimed"));
-            medicos.cadastrar(new Clinico("Bia", "98765432100", "9999", "123"));
+            pacientes.cadastrar(new Paciente("Ana", "52998224725", "9999", LocalDate.of(2000, 1, 1), "Unimed"));
+            medicos.cadastrar(new Clinico("Bia", "11144477735", "9999", "123"));
             ConsultaRepositorioJson consultas = new ConsultaRepositorioJson(pasta.resolve("consultas.json").toString(), pacientes, medicos);
             PacienteService ps = new PacienteService(pacientes);
             MedicoService ms = new MedicoService(medicos, consultas);
             ConsultaService cs = new ConsultaService(consultas, ps, ms, 20);
-            Consulta consulta = cs.agendar("12345678900", "123", LocalDateTime.now().plusDays(1).withSecond(0).withNano(0), "Rotina");
+            Consulta consulta = cs.agendar("52998224725", "123", LocalDateTime.now().plusDays(1).withSecond(0).withNano(0), "Rotina");
             try {
                 Platform.startup(() -> Platform.setImplicitExit(false));
             } catch (IllegalStateException e) {
@@ -76,10 +76,10 @@ public class ConsultaViewTest {
                 ComboBox<Medico> campoMedico = (ComboBox<Medico>) consultasView.lookup("#medicoConsulta");
                 assertEquals(1, campoPaciente.getItems().size());
                 abas.getSelectionModel().select(0);
-                Paciente novo = new Paciente("Caio", "11122233344", "9999", LocalDate.of(2000, 1, 1));
+                Paciente novo = new Paciente("Caio", "39053344705", "9999", LocalDate.of(2000, 1, 1));
                 ps.cadastrar(novo);
                 abas.getSelectionModel().select(1);
-                Medico novoMedico = ms.cadastrar("Pediatra", "Dora", "44455566677", "9999", "456");
+                Medico novoMedico = ms.cadastrar("Pediatra", "Dora", "16899535009", "9999", "456");
                 abas.getSelectionModel().select(2);
                 assertTrue(campoPaciente.getItems().contains(novo));
                 assertTrue(campoMedico.getItems().contains(novoMedico));

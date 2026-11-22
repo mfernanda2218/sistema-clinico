@@ -9,7 +9,6 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 
 import clinica.exception.ArquivoInvalidoException;
-import clinica.exception.MedicoNaoEncontradoException;
 import clinica.interfaces.Repositorio;
 import clinica.model.Medico;
 import clinica.service.MedicoFactory;
@@ -45,7 +44,7 @@ public class MedicoRepositorioJson implements Repositorio<Medico> {
 		if (entidade == null) {
 			throw new IllegalArgumentException("O campo médico não pode ser vazio.");
 		}
-		if (buscar(entidade.getCpf()) != null || buscar(entidade.getCrm()) != null) {
+		if (porCrm(entidade.getCrm()) != null || porCpf(entidade.getCpf()) != null) {
 			throw new IllegalArgumentException("O médico com esse CPF ou CRM já está cadastrado.");
 		}
 		medicos.add(entidade);
@@ -62,8 +61,20 @@ public class MedicoRepositorioJson implements Repositorio<Medico> {
 		if (identificador == null || identificador.isBlank()) {
 			return null;
 		}
+		Medico porCrm = porCrm(identificador);
+		return porCrm != null ? porCrm : porCpf(identificador);
+	}
+
+	private Medico porCrm(String crm) {
 		return medicos.stream()
-				.filter(m -> identificador.equalsIgnoreCase(m.getCpf()) || identificador.equalsIgnoreCase(m.getCrm()))
+				.filter(m -> m.getCrm().equalsIgnoreCase(crm.trim()))
+                .findFirst()
+                .orElse(null);
+	}
+
+	private Medico porCpf(String cpf) {
+		return medicos.stream()
+				.filter(m -> m.getCpf().equalsIgnoreCase(cpf.trim()))
                 .findFirst()
                 .orElse(null);
 	}
@@ -73,9 +84,9 @@ public class MedicoRepositorioJson implements Repositorio<Medico> {
 		if (entidade == null) {
 			throw new IllegalArgumentException("O campo médico não pode ser nulo.");
 		} 
-		Medico existente = buscar(entidade.getCpf());
+		Medico existente = porCpf(entidade.getCpf());
 		if (existente == null) {
-			existente = buscar(entidade.getCrm());
+			existente = porCrm(entidade.getCrm());
 		}
 		if (existente == null) {
 			throw new IllegalArgumentException("Médico não encontrado para atualização.");
@@ -143,7 +154,7 @@ public class MedicoRepositorioJson implements Repositorio<Medico> {
 				Medico medico = MedicoFactory.criar(especialidade, nome, cpf, telefone, crm);
 				carregados.add(medico);
 			}
-		} catch (JsonParseException | IOException | IllegalArgumentException | MedicoNaoEncontradoException e) {
+		} catch (JsonParseException | IOException | IllegalArgumentException e) {
 			throw new ArquivoInvalidoException("Arquivo de médicos corrompido ou inválido: " + caminhoArquivo, e);
 		}
 

@@ -1,4 +1,4 @@
-package clinica.view;
+package clinica.demo;
 
 import clinica.model.*;
 import clinica.repository.*;
@@ -19,8 +19,8 @@ public class MainDemo {
 			        new ConsultaRepositorioJson(pacientes, medicos), pacienteService, medicoService, 20);
 			
 			// Cadastrando paciente e médico
-			Paciente p1 = new Paciente("Maria Fernanda", "12345678900", "88888888", LocalDate.of(2000, 5, 10), "Unimed");
-			Medico m1 = new Cardiologista("Luan Vilela", "10000000000", "99999999", "CRM123");
+			Paciente p1 = new Paciente("Maria Fernanda", "52998224725", "88888888", LocalDate.of(2000, 5, 10), "Unimed");
+			Medico m1 = new Cardiologista("Luan Vilela", "23456789092", "99999999", "CRM123");
 			
 			pacienteService.cadastrar(p1);
 			medicoService.cadastrar(m1.getEspecialidade(), m1.getNome(), m1.getCpf(), m1.getTelefone(), m1.getCrm());
@@ -31,8 +31,8 @@ public class MainDemo {
 			LocalDateTime horario1 = LocalDate.now().plusDays(1).atTime(14, 0);
 			LocalDateTime horario2 = LocalDate.now().plusDays(1).atTime(15, 0);
 			
-			Consulta c1 = consultaService.agendar("12345678900", "CRM123", horario1, "Rotina");
-			Consulta c2 = consultaService.agendar("12345678900", "CRM123", horario2, "Retorno");
+			Consulta c1 = consultaService.agendar("52998224725", "CRM123", horario1, "Rotina");
+			Consulta c2 = consultaService.agendar("52998224725", "CRM123", horario2, "Retorno");
 			
 			// Se houver um método getValorFinal() ou calcularValor() na Consulta, use-o aqui para mostrar o desconto!
 			System.out.println("Consulta 1 agendada! Valor base: R$ " + c1.getValorBase());
@@ -53,7 +53,7 @@ public class MainDemo {
 			ConsultaService novoConsultaService = new ConsultaService(
 			        new ConsultaRepositorioJson(novosPacientes, novosMedicos), novoPacienteService, novoMedicoService, 20);
 			
-			System.out.println("Paciente recarregado: " + novoPacienteService.buscarPorCpf("12345678900").getNome());
+			System.out.println("Paciente recarregado: " + novoPacienteService.buscarPorCpf("52998224725").getNome());
 			System.out.println("Médico recarregado: " + novoMedicoService.buscarPorCrm("CRM123").getNome());
 			System.out.println("Consultas carregadas do JSON: " + novoConsultaService.listar().size());	
 			

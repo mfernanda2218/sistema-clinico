@@ -43,7 +43,7 @@ public class MainAppTest {
             assertEquals(passada, consultas.buscar(original.getId()).getDataHora().isBefore(LocalDateTime.now()));
             PacienteService ps = new PacienteService(pacientes, consultas);
             MedicoService ms = new MedicoService(medicos, consultas);
-            assertThrows(IllegalStateException.class, () -> ps.excluir("123.456.789-00"));
+            assertThrows(IllegalStateException.class, () -> ps.excluir("529.982.247-25"));
             assertThrows(IllegalStateException.class, () -> ms.excluir("123"));
             pacientes.carregar();
             medicos.carregar();
@@ -51,7 +51,7 @@ public class MainAppTest {
             assertNotNull(consultas.buscar(original.getId()).getPaciente());
             assertNotNull(consultas.buscar(original.getId()).getMedico());
             consultas.excluir(original.getId());
-            ps.excluir("12345678900");
+            ps.excluir("52998224725");
             ms.excluir("123");
             assertTrue(pacientes.listar().isEmpty());
             assertTrue(medicos.listar().isEmpty());
@@ -62,10 +62,10 @@ public class MainAppTest {
         PacienteRepositorioJson pacientes = new PacienteRepositorioJson(pasta.resolve("pacientes.json").toString());
         MedicoRepositorioJson medicos = new MedicoRepositorioJson(pasta.resolve("medicos.json").toString());
         ConsultaRepositorioJson consultas = new ConsultaRepositorioJson(pasta.resolve("consultas.json").toString(), pacientes, medicos);
-        pacientes.cadastrar(new Paciente("Ana", "12345678900", "9999", LocalDate.of(2000, 1, 1)));
-        medicos.cadastrar(new Clinico("Bia", "98765432100", "9999", "123"));
+        pacientes.cadastrar(new Paciente("Ana", "52998224725", "9999", LocalDate.of(2000, 1, 1)));
+        medicos.cadastrar(new Clinico("Bia", "11144477735", "9999", "123"));
         ConsultaService service = new ConsultaService(consultas, new PacienteService(pacientes), new MedicoService(medicos), 0);
-        return service.agendar("12345678900", "123", LocalDateTime.now().plusDays(1), "Rotina");
+        return service.agendar("52998224725", "123", LocalDateTime.now().plusDays(1), "Rotina");
     }
 
     @Test
@@ -84,7 +84,7 @@ public class MainAppTest {
         ConsultaRepositorioJson consultas = new ConsultaRepositorioJson(pasta.resolve("consultas.json").toString(), pacientes, medicos);
         Consulta carregada = consultas.buscar(original.getId());
         assertNotNull(carregada);
-        assertSame(pacientes.buscar("12345678900"), carregada.getPaciente());
+        assertSame(pacientes.buscar("52998224725"), carregada.getPaciente());
         assertSame(medicos.buscar("123"), carregada.getMedico());
         assertEquals(original.getDataHora(), carregada.getDataHora());
         assertEquals(original.calcularValor(), carregada.calcularValor(), 0.001);
@@ -117,7 +117,7 @@ public class MainAppTest {
         Files.writeString(pasta.resolve("consultas.json"), "[]");
         IllegalStateException erro = assertThrows(IllegalStateException.class, app::stop);
         assertEquals(1, erro.getSuppressed().length);
-        assertTrue(Files.readString(pasta.resolve("pacientes.json")).contains("12345678900"));
-        assertTrue(Files.readString(pasta.resolve("consultas.json")).contains("12345678900"));
+        assertTrue(Files.readString(pasta.resolve("pacientes.json")).contains("52998224725"));
+        assertTrue(Files.readString(pasta.resolve("consultas.json")).contains("52998224725"));
     }
 }

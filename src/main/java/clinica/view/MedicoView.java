@@ -1,7 +1,7 @@
 package clinica.view;
 
 import clinica.exception.MedicoNaoEncontradoException;
-import clinica.exception.AlertaUtil;
+import clinica.util.AlertaUtil;
 import clinica.model.Medico;
 import clinica.service.MedicoService;
 import javafx.collections.FXCollections;
@@ -11,9 +11,8 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
-import clinica.view.ValidadorUtil;
+import clinica.util.ValidadorUtil;
 import java.util.List;
-import java.util.Optional;
 
 public class MedicoView extends BorderPane {
 
@@ -50,7 +49,7 @@ public class MedicoView extends BorderPane {
         txtTelefone = new TextField();
         txtCrm = new TextField();
         cbEspecialidade = new ComboBox<>();
-        cbEspecialidade.getItems().addAll("Cardiologista", "Pediatra", "Clínico Geral");
+        cbEspecialidade.getItems().addAll("Cardiologista", "Pediatra", "Clínico");
         cbEspecialidade.setPromptText("Selecione uma especialidade");
 
         form.add(new Label("Nome:"), 0, 0);
@@ -117,7 +116,7 @@ public class MedicoView extends BorderPane {
     private void prepararEdicao() {
         Medico selecionado = tabela.getSelectionModel().getSelectedItem();
         if (selecionado == null) {
-            mostrarAviso("Selecione um médico na tabela para editar.");
+            AlertaUtil.aviso("Selecione um médico na tabela para editar.");
             return;
         }
         preencherFormulario(selecionado);
@@ -158,7 +157,7 @@ public class MedicoView extends BorderPane {
             List<Medico> lista = service.listar();
             dados.setAll(lista);
         } catch (Exception e) {
-            mostrarErro("Erro ao carregar médicos", e.getMessage());
+            AlertaUtil.erro("Erro ao carregar médicos", e.getMessage());
         }
     }
 
@@ -198,18 +197,18 @@ public class MedicoView extends BorderPane {
         dialog.setHeaderText("Informe a especialidade para filtrar");
         dialog.setContentText("Especialidade:");
 
-        Optional<String> resultado = dialog.showAndWait();
-        if (resultado.isEmpty() || resultado.get().isBlank()) return;
+        String resultado = dialog.showAndWait().orElse(null);
+        if (resultado == null || resultado.isBlank()) return;
 
         try {
-            List<Medico> filtrados = service.buscarPorEspecialidade(resultado.get());
+            List<Medico> filtrados = service.buscarPorEspecialidade(resultado);
             if (filtrados.isEmpty()) {
-                mostrarAviso("Nenhum médico encontrado para a especialidade informada.");
+                AlertaUtil.aviso("Nenhum médico encontrado para a especialidade informada.");
             } else {
                 dados.setAll(filtrados);
             }
         } catch (IllegalArgumentException e) {
-            mostrarErro("Filtro inválido", e.getMessage());
+            AlertaUtil.erro("Filtro inválido", e.getMessage());
         }
     }
 
@@ -245,30 +244,6 @@ public class MedicoView extends BorderPane {
         tabela.getSelectionModel().clearSelection();
     }
 
-    private void mostrarErro(String titulo, String mensagem) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(titulo);
-        alert.setHeaderText(null);
-        alert.setContentText(mensagem);
-        alert.showAndWait();
-    }
-
-    private void mostrarAviso(String mensagem) {
-        Alert alert = new Alert(Alert.AlertType.WARNING);
-        alert.setTitle("Atenção");
-        alert.setHeaderText(null);
-        alert.setContentText(mensagem);
-        alert.showAndWait();
-    }
-
-    private void mostrarInfo(String titulo, String mensagem) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(titulo);
-        alert.setHeaderText(null);
-        alert.setContentText(mensagem);
-        alert.showAndWait();
-    }
-
     private boolean validarFormulario() {
         StringBuilder erros = new StringBuilder();
 
@@ -278,7 +253,7 @@ public class MedicoView extends BorderPane {
 
         boolean cpfInv = !ValidadorUtil.isCpfValido(txtCpf.getText());
         ValidadorUtil.marcarInvalido(txtCpf, cpfInv);
-        if (cpfInv) erros.append("- CPF inválido (informe 11 dígitos).\n");
+        if (cpfInv) erros.append("- CPF inválido (verifique os dígitos).\n");
 
         boolean telInv = !ValidadorUtil.isTextoValido(txtTelefone.getText());
         ValidadorUtil.marcarInvalido(txtTelefone, telInv);

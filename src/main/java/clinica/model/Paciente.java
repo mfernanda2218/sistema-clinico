@@ -51,6 +51,21 @@ public class Paciente extends Pessoa {
         this.dataNascimento = dataNascimento;
     }
 
+    public static boolean convenioValido(String convenio) {
+        if (convenio == null) {
+            return true;
+        }
+        if (convenio.isBlank()) {
+            return false;
+        }
+        for (String aceito : CONVENIOS_ACEITOS) {
+            if (aceito.equalsIgnoreCase(convenio.trim())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void setConvenio(String convenio) throws ConvenioInvalidoException {
         if (convenio == null) {
             this.convenio = null;

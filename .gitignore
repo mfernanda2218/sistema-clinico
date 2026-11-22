@@ -36,3 +36,5 @@ Thumbs.db
 hs_err_pid*
 replay_pid*
 
+# Dados gerados em runtime (JSONs do sistema)
+dados/

@@ -19,8 +19,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.Locale;
 import java.util.function.Function;
-import clinica.view.ValidadorUtil;
-import clinica.exception.AlertaUtil;
+import clinica.util.ValidadorUtil;
+import clinica.util.AlertaUtil;
 
 public class ConsultaView extends BorderPane {
     private final ConsultaService consultas;
@@ -148,6 +148,7 @@ public class ConsultaView extends BorderPane {
     }
 
     private void agendar() {
+        if (!validarAgendamento()) { return; }
         try {
             if (paciente.getValue() == null || medico.getValue() == null) {
                 throw new IllegalArgumentException("Selecione o paciente e o médico.");
@@ -161,6 +162,7 @@ public class ConsultaView extends BorderPane {
     private void remarcar() {
         Consulta selecionada = tabela.getSelectionModel().getSelectedItem();
         if (selecionada == null) { return; }
+        if (!validarAgendamento()) { return; }
         try {
             consultas.remarcar(selecionada.getId(), horario());
             atualizar();
