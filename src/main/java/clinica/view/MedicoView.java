@@ -1,7 +1,7 @@
 package clinica.view;
 
 import clinica.exception.MedicoNaoEncontradoException;
-import clinica.exception.AlertaUtil;
+import clinica.util.AlertaUtil;
 import clinica.model.Medico;
 import clinica.service.MedicoService;
 import javafx.collections.FXCollections;
@@ -11,9 +11,8 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
-import clinica.view.ValidadorUtil;
+import clinica.util.ValidadorUtil;
 import java.util.List;
-import java.util.Optional;
 
 public class MedicoView extends BorderPane {
 
@@ -198,11 +197,11 @@ public class MedicoView extends BorderPane {
         dialog.setHeaderText("Informe a especialidade para filtrar");
         dialog.setContentText("Especialidade:");
 
-        Optional<String> resultado = dialog.showAndWait();
-        if (resultado.isEmpty() || resultado.get().isBlank()) return;
+        String resultado = dialog.showAndWait().orElse(null);
+        if (resultado == null || resultado.isBlank()) return;
 
         try {
-            List<Medico> filtrados = service.buscarPorEspecialidade(resultado.get());
+            List<Medico> filtrados = service.buscarPorEspecialidade(resultado);
             if (filtrados.isEmpty()) {
                 AlertaUtil.aviso("Nenhum médico encontrado para a especialidade informada.");
             } else {

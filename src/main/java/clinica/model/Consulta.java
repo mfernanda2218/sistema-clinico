@@ -96,10 +96,6 @@ public class Consulta implements Cobravel {
         return dataHora;
     }
 
-    public LocalDateTime getHorario() {
-        return dataHora;
-    }
-
      public void setDataHora(LocalDateTime dataHora) throws HorarioIndisponivelException {
         if (dataHora == null || !dataHora.isAfter(LocalDateTime.now())) {
             throw new IllegalArgumentException("Data e hora devem estar no futuro.");

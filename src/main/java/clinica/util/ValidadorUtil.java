@@ -1,4 +1,4 @@
-package clinica.view;
+package clinica.util;
 
 import clinica.model.Pessoa;
 import javafx.scene.control.Control;

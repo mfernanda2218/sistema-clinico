@@ -1,12 +1,8 @@
-package clinica.exception;
+package clinica.util;
 
 import clinica.exception.HorarioIndisponivelException;
-import clinica.exception.MedicoNaoEncontradoException;
-import clinica.exception.PacienteNaoEncontradoException;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
-
-import java.util.Optional;
 
 
 public final class AlertaUtil {
@@ -40,8 +36,8 @@ public final class AlertaUtil {
         alert.setHeaderText(cabecalho);
         alert.setContentText(mensagem);
 
-        Optional<ButtonType> resultado = alert.showAndWait();
-        return resultado.isPresent() && resultado.get() == ButtonType.OK;
+        ButtonType resultado = alert.showAndWait().orElse(null);
+        return resultado == ButtonType.OK;
     }
 
     private static void exibir(Alert.AlertType tipo, String titulo, String cabecalho, String mensagem) {

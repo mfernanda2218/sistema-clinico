@@ -1,7 +1,7 @@
 package clinica.view;
 
 import clinica.exception.PacienteNaoEncontradoException;
-import clinica.exception.AlertaUtil;
+import clinica.util.AlertaUtil;
 import clinica.model.Paciente;
 import clinica.model.Registro;
 import clinica.service.PacienteService;
@@ -13,12 +13,11 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.stage.Modality;
-import clinica.view.ValidadorUtil;
+import clinica.util.ValidadorUtil;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Optional;
 
 public class PacienteView extends BorderPane {
 
@@ -224,11 +223,11 @@ public class PacienteView extends BorderPane {
         dialog.setHeaderText("Informe o CPF");
         dialog.setContentText("CPF:");
 
-        Optional<String> resultado = dialog.showAndWait();
-        if (resultado.isEmpty() || resultado.get().isBlank()) return;
+        String resultado = dialog.showAndWait().orElse(null);
+        if (resultado == null || resultado.isBlank()) return;
 
         try {
-            Paciente p = service.buscarPorCpf(resultado.get());
+            Paciente p = service.buscarPorCpf(resultado);
             preencherFormulario(p);
             pacienteSelecionado = p;
             // Destaca na tabela

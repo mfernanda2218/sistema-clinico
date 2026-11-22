@@ -1,4 +1,4 @@
-package clinica.view;
+package clinica.demo;
 
 import clinica.model.*;
 import clinica.repository.*;

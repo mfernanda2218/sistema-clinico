@@ -4,20 +4,18 @@ import clinica.interfaces.Agendavel;
 import clinica.exception.HorarioIndisponivelException;
 import java.time.LocalDateTime;
 import java.util.TreeMap;
-import clinica.exception.MedicoNaoEncontradoException;
 
 public abstract class Medico extends Pessoa implements Agendavel {
     private String crm;
     private final transient TreeMap<LocalDateTime, Consulta> agenda;
 
-    public Medico(String nome, String cpf, String telefone, String crm)
-            throws MedicoNaoEncontradoException {
+    public Medico(String nome, String cpf, String telefone, String crm) {
         super(nome, cpf, telefone);
         setCrm(crm);
         this.agenda = new TreeMap<>();
     }
 
-    public void setCrm(String crm) throws MedicoNaoEncontradoException {
+    public void setCrm(String crm) {
         if (crm == null || crm.isBlank()) {
             throw new IllegalArgumentException("CRM não pode ser vazio.");
         }
@@ -49,7 +47,7 @@ public abstract class Medico extends Pessoa implements Agendavel {
         if (consulta == null || consulta.getMedico() != this) {
             throw new IllegalArgumentException("A consulta deve pertencer a este médico.");
         }
-        LocalDateTime horario = consulta.getHorario();
+        LocalDateTime horario = consulta.getDataHora();
         if (horario == null || !horario.isAfter(LocalDateTime.now())) {
             throw new IllegalArgumentException("Horário deve estar no futuro.");
         }

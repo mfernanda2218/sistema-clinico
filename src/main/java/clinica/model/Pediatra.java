@@ -1,9 +1,7 @@
 package clinica.model;
 
-import clinica.exception.MedicoNaoEncontradoException;
-
 public class Pediatra extends Medico {
-	public Pediatra(String nome, String cpf, String telefone, String crm) throws MedicoNaoEncontradoException{
+	public Pediatra(String nome, String cpf, String telefone, String crm){
 		super(nome, cpf, telefone, crm);
 	}
 

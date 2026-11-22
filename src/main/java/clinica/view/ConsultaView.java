@@ -19,8 +19,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.Locale;
 import java.util.function.Function;
-import clinica.view.ValidadorUtil;
-import clinica.exception.AlertaUtil;
+import clinica.util.ValidadorUtil;
+import clinica.util.AlertaUtil;
 
 public class ConsultaView extends BorderPane {
     private final ConsultaService consultas;

@@ -9,7 +9,6 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 
 import clinica.exception.ArquivoInvalidoException;
-import clinica.exception.MedicoNaoEncontradoException;
 import clinica.interfaces.Repositorio;
 import clinica.model.Medico;
 import clinica.service.MedicoFactory;
@@ -155,7 +154,7 @@ public class MedicoRepositorioJson implements Repositorio<Medico> {
 				Medico medico = MedicoFactory.criar(especialidade, nome, cpf, telefone, crm);
 				carregados.add(medico);
 			}
-		} catch (JsonParseException | IOException | IllegalArgumentException | MedicoNaoEncontradoException e) {
+		} catch (JsonParseException | IOException | IllegalArgumentException e) {
 			throw new ArquivoInvalidoException("Arquivo de médicos corrompido ou inválido: " + caminhoArquivo, e);
 		}
 

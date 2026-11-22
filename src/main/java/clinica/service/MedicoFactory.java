@@ -1,6 +1,5 @@
 package clinica.service;
 
-import clinica.exception.MedicoNaoEncontradoException;
 import clinica.model.Cardiologista;
 import clinica.model.Clinico;
 import clinica.model.Pediatra;
@@ -12,7 +11,7 @@ public class MedicoFactory {
 		
 	}
 	
-	public static Medico criar(String especialidade, String nome, String cpf, String telefone, String crm) throws MedicoNaoEncontradoException {
+	public static Medico criar(String especialidade, String nome, String cpf, String telefone, String crm) {
 		if (especialidade == null || especialidade.isBlank()) {
 			throw new IllegalArgumentException("Campo especialidade está vazio");
 		}
