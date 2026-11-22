@@ -170,7 +170,7 @@ public class MedicoView extends BorderPane {
             String especialidade = cbEspecialidade.getValue();
 
             if (medicoSelecionado == null) {
-                service.cadastrarPorEspecialidade(especialidade, nome, cpf, telefone, crm);
+                service.cadastrar(especialidade, nome, cpf, telefone, crm);
                 mostrarInfo("Sucesso", "Médico cadastrado com sucesso!");
             } else {
                 medicoSelecionado.setNome(nome);
