@@ -45,7 +45,11 @@ public class PacienteRepositorioMemoria implements Repositorio<Paciente> {
 
     @Override
     public Paciente buscar(String cpf) {
-        return pacientesPorCpf.get(cpf);
+        if (cpf == null) {
+            return null;
+        }
+        String cpfLimpo = cpf.replaceAll("\\D", "");
+        return pacientesPorCpf.get(cpfLimpo.isEmpty() ? cpf : cpfLimpo);
     }
 
     @Override

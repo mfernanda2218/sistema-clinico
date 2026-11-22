@@ -141,6 +141,19 @@ public class PacienteRepositorioJson implements Repositorio<Paciente> {
                         throw new ArquivoInvalidoException("Arquivo de pacientes contém paciente inválido ou sem CPF.");
                     }
                     String cpfLimpo = p.getCpf().replaceAll("\\D", "");
+                    if (!Paciente.cpfValido(cpfLimpo)) {
+                        throw new ArquivoInvalidoException("Arquivo de pacientes contém CPF inválido: " + p.getCpf());
+                    }
+                    if (p.getNome() == null || p.getNome().isBlank()
+                            || p.getTelefone() == null || p.getTelefone().isBlank()) {
+                        throw new ArquivoInvalidoException("Arquivo de pacientes contém paciente sem nome ou telefone: " + p.getCpf());
+                    }
+                    if (p.getDataNascimento() == null || p.getDataNascimento().isAfter(LocalDate.now())) {
+                        throw new ArquivoInvalidoException("Arquivo de pacientes contém data de nascimento inválida: " + p.getCpf());
+                    }
+                    if (!Paciente.convenioValido(p.getConvenio())) {
+                        throw new ArquivoInvalidoException("Arquivo de pacientes contém convênio não aceito: " + p.getConvenio());
+                    }
                     String chave = cpfLimpo.isEmpty() ? p.getCpf() : cpfLimpo;
                     if (novoMap.containsKey(chave)) {
                         throw new ArquivoInvalidoException("Arquivo de pacientes contém CPF duplicado: " + p.getCpf());
