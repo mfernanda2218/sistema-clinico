@@ -19,6 +19,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.Locale;
 import java.util.function.Function;
+import clinica.view.ValidadorUtil;
+import clinica.exception.AlertaUtil;
 
 public class ConsultaView extends BorderPane {
     private final ConsultaService consultas;
@@ -141,7 +143,7 @@ public class ConsultaView extends BorderPane {
             lista.sort(Comparator.comparing(Consulta::getDataHora));
             tabela.getItems().setAll(lista);
         } catch (Exception e) {
-            erro(e);
+            AlertaUtil.erro("Não foi possível concluir", e);;
         }
     }
 
@@ -153,7 +155,7 @@ public class ConsultaView extends BorderPane {
             Consulta nova = consultas.agendar(paciente.getValue().getCpf(), medico.getValue().getCrm(), horario(), tipo.getText());
             atualizar();
             tabela.getSelectionModel().select(nova);
-        } catch (Exception e) { erro(e); }
+        } catch (Exception e) { AlertaUtil.erro("Não foi possível concluir", e); }
     }
 
     private void remarcar() {
@@ -163,25 +165,66 @@ public class ConsultaView extends BorderPane {
             consultas.remarcar(selecionada.getId(), horario());
             atualizar();
             tabela.getSelectionModel().select(consultas.buscarPorId(selecionada.getId()));
-        } catch (Exception e) { erro(e); }
+        } catch (Exception e) { AlertaUtil.erro("Não foi possível concluir", e); }
     }
 
-    private void cancelar() {
-        Consulta selecionada = tabela.getSelectionModel().getSelectedItem();
-        if (selecionada == null) { return; }
-        Alert confirmacao = new Alert(Alert.AlertType.CONFIRMATION,
-                "Cancelar a consulta de " + selecionada.getPaciente().getNome() + "?", ButtonType.YES, ButtonType.NO);
-        if (confirmacao.showAndWait().orElse(ButtonType.NO) != ButtonType.YES) { return; }
-        try {
-            consultas.cancelar(selecionada.getId());
-            atualizar();
-        } catch (Exception e) { erro(e); }
-    }
+   private void cancelar() {
+    Consulta selecionada = tabela.getSelectionModel().getSelectedItem();
+    if (selecionada == null) { return; }
 
-    private void erro(Exception e) {
-        Alert alerta = new Alert(Alert.AlertType.WARNING);
-        alerta.setHeaderText(e instanceof HorarioIndisponivelException ? "Horário indisponível" : "Não foi possível concluir");
-        alerta.setContentText(e.getMessage() == null ? "Verifique os dados informados." : e.getMessage());
-        alerta.showAndWait();
+    boolean confirmou = AlertaUtil.confirmar(
+            "Confirmação",
+            "Cancelar Consulta",
+            "Cancelar a consulta de " + selecionada.getPaciente().getNome() + "?"
+    );
+
+    if (!confirmou) { return; }
+
+    try {
+        consultas.cancelar(selecionada.getId());
+        AlertaUtil.info("Sucesso", "Consulta cancelada com sucesso!");
+        atualizar();
+    } catch (Exception e) {
+        AlertaUtil.erro("Erro ao cancelar", e);
     }
+}
+
+    private boolean validarAgendamento() {
+    StringBuilder erros = new StringBuilder();
+
+    boolean pacInv = paciente.getValue() == null;
+    ValidadorUtil.marcarInvalido(paciente, pacInv);
+    if (pacInv) erros.append("- Selecione um paciente.\n");
+
+    boolean medInv = medico.getValue() == null;
+    ValidadorUtil.marcarInvalido(medico, medInv);
+    if (medInv) erros.append("- Selecione um médico.\n");
+
+    boolean tipoInv = !ValidadorUtil.isTextoValido(tipo.getText());
+    ValidadorUtil.marcarInvalido(tipo, tipoInv);
+    if (tipoInv) erros.append("- Informe o tipo da consulta.\n");
+
+    erros.append(validarDataHora());
+
+    if (!erros.isEmpty()) {
+        AlertaUtil.aviso("Corrija os campos destacados:\n\n" + erros);
+        return false;
+    }
+    return true;
+}
+
+private String validarDataHora() {
+    StringBuilder erros = new StringBuilder();
+    data.commitValue();
+
+    boolean dataInv = !ValidadorUtil.isDataAgendamentoValida(data.getValue());
+    ValidadorUtil.marcarInvalido(data, dataInv);
+    if (dataInv) erros.append("- Informe uma data válida (não pode ser no passado).\n");
+
+    boolean horaInv = !ValidadorUtil.isHoraValida(hora.getText());
+    ValidadorUtil.marcarInvalido(hora, horaInv);
+    if (horaInv) erros.append("- Informe uma hora válida no formato HH:mm.\n");
+
+    return erros.toString();
+}
 }
