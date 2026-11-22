@@ -67,6 +67,13 @@
                     <mainClass>clinica.view.MainApp</mainClass>
                 </configuration>
             </plugin>
+
+            <!-- Plugin para rodar classes main fora do JavaFX (ex.: demo) -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.5.0</version>
+            </plugin>
         </plugins>
     </build>
 </project>
