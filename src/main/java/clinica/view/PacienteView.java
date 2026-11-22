@@ -1,6 +1,7 @@
 package clinica.view;
 
 import clinica.exception.PacienteNaoEncontradoException;
+import clinica.exception.AlertaUtil;
 import clinica.model.Paciente;
 import clinica.model.Registro;
 import clinica.service.PacienteService;
@@ -12,6 +13,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.stage.Modality;
+import clinica.view.ValidadorUtil;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -186,13 +188,32 @@ public class PacienteView extends BorderPane {
         txtCpf.setDisable(true); // CPF não deve ser alterado
     }
 
-    private void excluir() {
-        Paciente selecionado = tabela.getSelectionModel().getSelectedItem();
-        if (selecionado == null) {
-            mostrarAviso("Selecione um paciente para excluir.");
-            return;
-        }
+   private void excluir() {
+    Paciente selecionado = tabela.getSelectionModel().getSelectedItem();
+    if (selecionado == null) {
+        AlertaUtil.aviso("Selecione um paciente para excluir.");
+        return;
+    }
 
+    boolean confirmou = AlertaUtil.confirmar(
+            "Confirmação",
+            "Excluir Paciente",
+            "Deseja realmente excluir " + selecionado.getNome() + "?"
+    );
+
+    if (confirmou) {
+        try {
+            service.excluir(selecionado.getCrm());
+            AlertaUtil.info("Sucesso", "Paciente excluído com sucesso!");
+            limparFormulario();
+            carregarTabela();
+        } catch (PacienteNaoEncontradoException e) {
+            AlertaUtil.erro("Paciente não encontrado", e);
+        } catch (Exception e) {
+            AlertaUtil.erro("Erro ao excluir", e);
+        }
+    }
+}
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle("Confirmação");
         confirm.setHeaderText("Excluir paciente");
@@ -355,4 +376,30 @@ public class PacienteView extends BorderPane {
         alert.setContentText(mensagem);
         alert.showAndWait();
     }
+
+    private boolean validarFormulario() {
+    StringBuilder erros = new StringBuilder();
+
+    boolean nomeInv = !ValidadorUtil.isTextoValido(txtNome.getText());
+    ValidadorUtil.marcarInvalido(txtNome, nomeInv);
+    if (nomeInv) erros.append("- Nome é obrigatório.\n");
+
+    boolean cpfInv = !ValidadorUtil.isCpfValido(txtCpf.getText());
+    ValidadorUtil.marcarInvalido(txtCpf, cpfInv);
+    if (cpfInv) erros.append("- CPF inválido (informe 11 dígitos).\n");
+
+    boolean telInv = !ValidadorUtil.isTextoValido(txtTelefone.getText());
+    ValidadorUtil.marcarInvalido(txtTelefone, telInv);
+    if (telInv) erros.append("- Telefone é obrigatório.\n");
+
+    boolean nascInv = !ValidadorUtil.isDataNascimentoValida(dpNascimento.getValue());
+    ValidadorUtil.marcarInvalido(dpNascimento, nascInv);
+    if (nascInv) erros.append("- Data de nascimento obrigatória e não pode ser futura.\n");
+
+    if (!erros.isEmpty()) {
+        AlertaUtil.aviso("Corrija os campos destacados antes de salvar:\n\n" + erros);
+        return false;
+    }
+    return true;
+}
 }
