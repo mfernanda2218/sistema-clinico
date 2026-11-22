@@ -255,9 +255,9 @@ public class MedicoView extends BorderPane {
         ValidadorUtil.marcarInvalido(txtCpf, cpfInv);
         if (cpfInv) erros.append("- CPF inválido (verifique os dígitos).\n");
 
-        boolean telInv = !ValidadorUtil.isTextoValido(txtTelefone.getText());
+        boolean telInv = !ValidadorUtil.isTelefoneValido(txtTelefone.getText());
         ValidadorUtil.marcarInvalido(txtTelefone, telInv);
-        if (telInv) erros.append("- Telefone é obrigatório.\n");
+        if (telInv) erros.append("- Telefone inválido. Use (XX)XXXXX-XXXX ou 10-11 dígitos.\n");
 
         boolean crmInv = !ValidadorUtil.isCrmValido(txtCrm.getText());
         ValidadorUtil.marcarInvalido(txtCrm, crmInv);

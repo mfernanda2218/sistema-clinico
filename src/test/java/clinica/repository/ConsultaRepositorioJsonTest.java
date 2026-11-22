@@ -62,14 +62,14 @@ public class ConsultaRepositorioJsonTest {
         try {
             RepositorioTeste<Paciente> pacientes = new RepositorioTeste<>();
             RepositorioTeste<Medico> medicos = new RepositorioTeste<>();
-            Paciente paciente = new Paciente("Ana", "52998224725", "9999", LocalDate.of(2000, 1, 1));
-            Medico medico = new Clinico("Bia", "11144477735", "9999", "123");
+            Paciente paciente = new Paciente("Ana", "52998224725", "81999990001", LocalDate.of(2000, 1, 1));
+            Medico medico = new Clinico("Bia", "11144477735", "81999990001", "1234");
             pacientes.cadastrar(paciente);
             medicos.cadastrar(medico);
             RepositorioComFalha repo = new RepositorioComFalha(arquivo.toString(), pacientes, medicos);
             ConsultaService service = new ConsultaService(repo, new PacienteService(pacientes), new MedicoService(medicos), 20);
             LocalDateTime horario = LocalDateTime.now().plusDays(1);
-            Consulta consulta = service.agendar(paciente.getCpf(), "123", horario, "Rotina");
+            Consulta consulta = service.agendar(paciente.getCpf(), "1234", horario, "Rotina");
             String original = Files.readString(arquivo);
             repo.falhar = true;
             assertThrows(java.io.UncheckedIOException.class, () -> service.remarcar(consulta.getId(), horario.plusHours(1)));
@@ -96,15 +96,15 @@ public class ConsultaRepositorioJsonTest {
         try {
             RepositorioTeste<Paciente> pacientes = new RepositorioTeste<>();
             RepositorioTeste<Medico> medicos = new RepositorioTeste<>();
-            Paciente paciente = new Paciente("Ana", "52998224725", "9999", LocalDate.of(2000, 1, 1));
-            Medico medico = new Clinico("Bia", "11144477735", "9999", "123");
+            Paciente paciente = new Paciente("Ana", "52998224725", "81999990001", LocalDate.of(2000, 1, 1));
+            Medico medico = new Clinico("Bia", "11144477735", "81999990001", "1234");
             pacientes.cadastrar(paciente);
             medicos.cadastrar(medico);
             ConsultaRepositorioJson repo = new ConsultaRepositorioJson(arquivo.toString(), pacientes, medicos);
             ConsultaService service = new ConsultaService(repo, new PacienteService(pacientes), new MedicoService(medicos), 20);
             LocalDateTime horario = LocalDateTime.now().plusDays(1);
-            Consulta primeira = service.agendar(paciente.getCpf(), "123", horario, "Rotina");
-            Consulta segunda = service.agendar(paciente.getCpf(), "123", horario.plusHours(1), "Rotina");
+            Consulta primeira = service.agendar(paciente.getCpf(), "1234", horario, "Rotina");
+            Consulta segunda = service.agendar(paciente.getCpf(), "1234", horario.plusHours(1), "Rotina");
             String antes = Files.readString(arquivo);
             assertThrows(HorarioIndisponivelException.class, () -> service.remarcar(primeira.getId(), segunda.getDataHora()));
             assertEquals(antes, Files.readString(arquivo));
@@ -117,7 +117,7 @@ public class ConsultaRepositorioJsonTest {
             repo.carregar();
             assertEquals(novoHorario, service.buscarPorId(primeira.getId()).getDataHora());
             assertEquals(2, service.listarPorPaciente("529.982.247-25").size());
-            assertEquals(2, service.listarPorMedico("123").size());
+            assertEquals(2, service.listarPorMedico("1234").size());
             assertEquals(1, service.listarPorData(novoHorario.toLocalDate()).size());
             service.listar().clear();
             assertEquals(2, service.listar().size());
@@ -140,8 +140,8 @@ public class ConsultaRepositorioJsonTest {
         try {
             RepositorioTeste<Paciente> pacientes = new RepositorioTeste<>();
             RepositorioTeste<Medico> medicos = new RepositorioTeste<>();
-            Paciente paciente = new Paciente("Ana", "52998224725", "9999", LocalDate.of(2000, 1, 1));
-            Medico medico = new Clinico("Bia", "11144477735", "9999", "123");
+            Paciente paciente = new Paciente("Ana", "52998224725", "81999990001", LocalDate.of(2000, 1, 1));
+            Medico medico = new Clinico("Bia", "11144477735", "81999990001", "1234");
             pacientes.cadastrar(paciente);
             medicos.cadastrar(medico);
             LocalDateTime horario = LocalDateTime.now().plusDays(1).withNano(123456789);

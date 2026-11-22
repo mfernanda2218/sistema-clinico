@@ -1,5 +1,6 @@
 package clinica.util;
 
+import clinica.model.Medico;
 import clinica.model.Pessoa;
 import javafx.scene.control.Control;
 
@@ -7,8 +8,6 @@ import java.time.LocalDate;
 
 public final class ValidadorUtil {
 
-    public static final String REGEX_CPF = "\\d{11}|\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}";
-    public static final String REGEX_CRM = "\\d{4,6}(-[A-Z]{2})?";
     public static final String REGEX_HORA = "([01]\\d|2[0-3]):[0-5]\\d";
 
     private ValidadorUtil() {}
@@ -22,7 +21,11 @@ public final class ValidadorUtil {
     }
 
     public static boolean isCrmValido(String crm) {
-        return isTextoValido(crm) && crm.trim().matches(REGEX_CRM);
+        return isTextoValido(crm) && Medico.crmValido(crm);
+    }
+
+    public static boolean isTelefoneValido(String telefone) {
+        return isTextoValido(telefone) && Pessoa.telefoneValido(telefone);
     }
 
     public static boolean isDataNascimentoValida(LocalDate data) {

@@ -1,6 +1,11 @@
 package clinica.model;
 
+import java.util.regex.Pattern;
+
 public abstract class Pessoa {
+
+    private static final Pattern TELEFONE_PATTERN = Pattern.compile(
+            "\\(\\d{2}\\)\\s?\\d{4,5}-\\d{4}|\\d{10,11}");
 
     private String nome;
     private String cpf;
@@ -72,11 +77,20 @@ public abstract class Pessoa {
         this.cpf = cpfLimpo;
     }
 
+    public static boolean telefoneValido(String telefone) {
+        return telefone != null && TELEFONE_PATTERN.matcher(telefone.trim()).matches();
+    }
+
     public void setTelefone(String telefone) {
         if (telefone == null || telefone.isBlank()) {
             throw new IllegalArgumentException("Telefone não pode ser vazio.");
         }
-        this.telefone = telefone.trim();
+        String tel = telefone.trim();
+        if (!telefoneValido(tel)) {
+            throw new IllegalArgumentException(
+                    "Telefone inválido. Use (XX)XXXXX-XXXX ou 10-11 dígitos.");
+        }
+        this.telefone = tel;
     }
 
     // Método abstrato (polimorfismo)
