@@ -33,8 +33,9 @@ public class MainAppTest {
             Path arquivo = pasta.resolve("consultas.json");
             if (passada) {
                 String json = Files.readString(arquivo);
-                Files.writeString(arquivo, json.replace(original.getDataHora().toString(),
-                        original.getDataHora().minusDays(2).toString()));
+                com.google.gson.JsonArray lista = com.google.gson.JsonParser.parseString(json).getAsJsonArray();
+                lista.get(0).getAsJsonObject().addProperty("dataHora", original.getDataHora().minusDays(2).toString());
+                Files.writeString(arquivo, lista.toString());
             }
             PacienteRepositorioJson pacientes = new PacienteRepositorioJson(pasta.resolve("pacientes.json").toString());
             MedicoRepositorioJson medicos = new MedicoRepositorioJson(pasta.resolve("medicos.json").toString());
