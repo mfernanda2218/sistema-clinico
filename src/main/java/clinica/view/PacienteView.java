@@ -136,11 +136,14 @@ public class PacienteView extends BorderPane {
             List<Paciente> lista = service.listar();
             dados.setAll(lista);
         } catch (Exception e) {
-            mostrarErro("Erro ao carregar pacientes", e.getMessage());
+            AlertaUtil.erro("Erro ao carregar pacientes", e.getMessage());
         }
     }
 
     private void salvar() {
+        if (!validarFormulario()) {
+            return;
+        }
         try {
             String nome = txtNome.getText();
             String cpf = txtCpf.getText();
@@ -155,7 +158,7 @@ public class PacienteView extends BorderPane {
                 // Novo
                 Paciente novo = new Paciente(nome, cpf, telefone, nascimento, convenio);
                 service.cadastrar(novo);
-                mostrarInfo("Sucesso", "Paciente cadastrado com sucesso!");
+                AlertaUtil.info("Sucesso", "Paciente cadastrado com sucesso!");
             } else {
                 // Edição
                 pacienteSelecionado.setNome(nome);
@@ -164,23 +167,23 @@ public class PacienteView extends BorderPane {
                 pacienteSelecionado.setConvenio(convenio);
                 // CPF normalmente não se altera, mas se o service permitir:
                 service.atualizar(pacienteSelecionado);
-                mostrarInfo("Sucesso", "Paciente atualizado com sucesso!");
+                AlertaUtil.info("Sucesso", "Paciente atualizado com sucesso!");
             }
 
             limparFormulario();
             carregarTabela();
 
         } catch (IllegalArgumentException e) {
-            mostrarErro("Dados inválidos", e.getMessage());
+            AlertaUtil.erro("Dados inválidos", e.getMessage());
         } catch (Exception e) {
-            mostrarErro("Erro ao salvar", e.getMessage());
+            AlertaUtil.erro("Erro ao salvar", e.getMessage());
         }
     }
 
     private void prepararEdicao() {
         Paciente selecionado = tabela.getSelectionModel().getSelectedItem();
         if (selecionado == null) {
-            mostrarAviso("Selecione um paciente na tabela para editar.");
+            AlertaUtil.aviso("Selecione um paciente na tabela para editar.");
             return;
         }
         preencherFormulario(selecionado);
@@ -203,7 +206,7 @@ public class PacienteView extends BorderPane {
 
     if (confirmou) {
         try {
-            service.excluir(selecionado.getCrm());
+            service.excluir(selecionado.getCpf());
             AlertaUtil.info("Sucesso", "Paciente excluído com sucesso!");
             limparFormulario();
             carregarTabela();
@@ -214,25 +217,6 @@ public class PacienteView extends BorderPane {
         }
     }
 }
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Confirmação");
-        confirm.setHeaderText("Excluir paciente");
-        confirm.setContentText("Deseja realmente excluir " + selecionado.getNome() + "?");
-        Optional<ButtonType> resultado = confirm.showAndWait();
-
-        if (resultado.isPresent() && resultado.get() == ButtonType.OK) {
-            try {
-                service.excluir(selecionado.getCpf());
-                mostrarInfo("Sucesso", "Paciente excluído.");
-                limparFormulario();
-                carregarTabela();
-            } catch (PacienteNaoEncontradoException e) {
-                mostrarErro("Erro", e.getMessage());
-            } catch (Exception e) {
-                mostrarErro("Erro ao excluir", e.getMessage());
-            }
-        }
-    }
 
     private void buscarPorCpf() {
         TextInputDialog dialog = new TextInputDialog();
@@ -251,16 +235,16 @@ public class PacienteView extends BorderPane {
             tabela.getSelectionModel().select(p);
             tabela.scrollTo(p);
         } catch (PacienteNaoEncontradoException e) {
-            mostrarErro("Não encontrado", e.getMessage());
+            AlertaUtil.erro("Não encontrado", e.getMessage());
         } catch (Exception e) {
-            mostrarErro("Erro na busca", e.getMessage());
+            AlertaUtil.erro("Erro na busca", e.getMessage());
         }
     }
 
     private void abrirProntuario() {
         Paciente selecionado = tabela.getSelectionModel().getSelectedItem();
         if (selecionado == null) {
-            mostrarAviso("Selecione um paciente para ver o prontuário.");
+            AlertaUtil.aviso("Selecione um paciente para ver o prontuário.");
             return;
         }
 
@@ -289,7 +273,7 @@ public class PacienteView extends BorderPane {
         btnAdicionar.setOnAction(e -> {
             String desc = txtDescricao.getText();
             if (desc == null || desc.isBlank()) {
-                mostrarAviso("A descrição do registro é obrigatória.");
+                AlertaUtil.aviso("A descrição do registro é obrigatória.");
                 return;
             }
             try {
@@ -300,9 +284,9 @@ public class PacienteView extends BorderPane {
                 atualizarListaRegistros(listaRegistros, selecionado);
                 txtDescricao.clear();
                 txtObservacoes.clear();
-                mostrarInfo("Sucesso", "Registro adicionado ao prontuário.");
+                AlertaUtil.info("Sucesso", "Registro adicionado ao prontuário.");
             } catch (Exception ex) {
-                mostrarErro("Erro ao adicionar registro", ex.getMessage());
+                AlertaUtil.erro("Erro ao adicionar registro", ex.getMessage());
             }
         });
 
@@ -353,30 +337,6 @@ public class PacienteView extends BorderPane {
         tabela.getSelectionModel().clearSelection();
     }
 
-    private void mostrarErro(String titulo, String mensagem) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(titulo);
-        alert.setHeaderText(null);
-        alert.setContentText(mensagem);
-        alert.showAndWait();
-    }
-
-    private void mostrarAviso(String mensagem) {
-        Alert alert = new Alert(Alert.AlertType.WARNING);
-        alert.setTitle("Atenção");
-        alert.setHeaderText(null);
-        alert.setContentText(mensagem);
-        alert.showAndWait();
-    }
-
-    private void mostrarInfo(String titulo, String mensagem) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(titulo);
-        alert.setHeaderText(null);
-        alert.setContentText(mensagem);
-        alert.showAndWait();
-    }
-
     private boolean validarFormulario() {
     StringBuilder erros = new StringBuilder();
 
@@ -386,7 +346,7 @@ public class PacienteView extends BorderPane {
 
     boolean cpfInv = !ValidadorUtil.isCpfValido(txtCpf.getText());
     ValidadorUtil.marcarInvalido(txtCpf, cpfInv);
-    if (cpfInv) erros.append("- CPF inválido (informe 11 dígitos).\n");
+    if (cpfInv) erros.append("- CPF inválido (verifique os dígitos).\n");
 
     boolean telInv = !ValidadorUtil.isTextoValido(txtTelefone.getText());
     ValidadorUtil.marcarInvalido(txtTelefone, telInv);

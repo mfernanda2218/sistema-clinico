@@ -14,6 +14,10 @@ public final class AlertaUtil {
 	private AlertaUtil() {
 		//evita instanciação
 	}
+	public static void erro(String titulo, String mensagem) {
+		exibir(Alert.AlertType.ERROR, titulo, null, tratarMensagem(mensagem));
+	}
+
 	public static void erro(String titulo, Exception e) {
         String cabecalho = null;
         if (e instanceof HorarioIndisponivelException) {
@@ -54,12 +58,4 @@ public final class AlertaUtil {
         }
         return mensagem;
     }
-
-public static void marcarInvalido(javafx.scene.control.Control campo, boolean invalido) {
-    if (invalido) {
-        campo.setStyle("-fx-border-color: #d32f2f; -fx-border-width: 1.5px; -fx-border-radius: 3px;");
-    } else {
-        campo.setStyle(null);
-    }
-}
 }
