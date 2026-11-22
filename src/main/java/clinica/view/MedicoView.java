@@ -10,7 +10,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
-
+import clinica.view.ValidadorUtil;
 import java.util.List;
 import java.util.Optional;
 
@@ -126,31 +126,31 @@ public class MedicoView extends BorderPane {
     }
 
     private void excluir() {
-        Medico selecionado = tabela.getSelectionModel().getSelectedItem();
-        if (selecionado == null) {
-            mostrarAviso("Selecione um médico para excluir.");
-            return;
-        }
+    Medico selecionado = tabela.getSelectionModel().getSelectedItem();
+    if (selecionado == null) {
+        AlertaUtil.aviso("Selecione um médico para excluir.");
+        return;
+    }
 
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Confirmação");
-        confirm.setHeaderText("Excluir Médico");
-        confirm.setContentText("Deseja realmente excluir " + selecionado.getNome() + "?");
-        Optional<ButtonType> resultado = confirm.showAndWait();
+    boolean confirmou = AlertaUtil.confirmar(
+            "Confirmação",
+            "Excluir Médico",
+            "Deseja realmente excluir " + selecionado.getNome() + "?"
+    );
 
-        if (resultado.isPresent() && resultado.get() == ButtonType.OK) {
-            try {
-                service.excluir(selecionado.getCrm());
-                mostrarInfo("Sucesso", "Médico excluído com sucesso!");
-                limparFormulario();
-                carregarTabela();
-            } catch (MedicoNaoEncontradoException e) {
-                mostrarErro("Erro, médico não encontrado.", e.getMessage());
-            } catch (Exception e) {
-                mostrarErro("Erro ao excluir", e.getMessage());
-            }
+    if (confirmou) {
+        try {
+            service.excluir(selecionado.getCrm());
+            AlertaUtil.info("Sucesso", "Médico excluído com sucesso!");
+            limparFormulario();
+            carregarTabela();
+        } catch (MedicoNaoEncontradoException e) {
+            AlertaUtil.erro("Médico não encontrado", e);
+        } catch (Exception e) {
+            AlertaUtil.erro("Erro ao excluir", e);
         }
     }
+}
 
     private void carregarTabela() {
         try {
@@ -162,6 +162,10 @@ public class MedicoView extends BorderPane {
     }
 
     private void salvar() {
+        if (!validarFormulario()) {
+            return;
+        }
+
         try {
             String nome = txtNome.getText();
             String cpf = txtCpf.getText();
@@ -171,20 +175,19 @@ public class MedicoView extends BorderPane {
 
             if (medicoSelecionado == null) {
                 service.cadastrar(especialidade, nome, cpf, telefone, crm);
-                mostrarInfo("Sucesso", "Médico cadastrado com sucesso!");
+                AlertaUtil.info("Sucesso", "Médico cadastrado com sucesso!");
             } else {
                 medicoSelecionado.setNome(nome);
                 medicoSelecionado.setTelefone(telefone);
                 service.atualizar(medicoSelecionado);
-                mostrarInfo("Sucesso", "Médico atualizado com sucesso!");
+                AlertaUtil.info("Sucesso", "Médico atualizado com sucesso!");
             }
-
             limparFormulario();
             carregarTabela();
         } catch (IllegalArgumentException | MedicoNaoEncontradoException e) {
-            mostrarErro("Erro de validação", e.getMessage());
+            AlertaUtil.erro("Erro de validação", e);
         } catch (Exception e) {
-            mostrarErro("Erro ao salvar", e.getMessage());
+            AlertaUtil.erro("Erro ao salvar", e);
         }
     }
 
@@ -227,6 +230,14 @@ public class MedicoView extends BorderPane {
         txtTelefone.clear();
         txtCrm.clear();
         cbEspecialidade.setValue(null);
+
+        // Remove as bordas vermelhas ao limpar o formulário
+        ValidadorUtil.marcarInvalido(txtNome, false);
+        ValidadorUtil.marcarInvalido(txtCpf, false);
+        ValidadorUtil.marcarInvalido(txtTelefone, false);
+        ValidadorUtil.marcarInvalido(txtCrm, false);
+        ValidadorUtil.marcarInvalido(cbEspecialidade, false);
+
         txtCpf.setDisable(false);
         txtCrm.setDisable(false);
         medicoSelecionado = null;
@@ -255,5 +266,35 @@ public class MedicoView extends BorderPane {
         alert.setHeaderText(null);
         alert.setContentText(mensagem);
         alert.showAndWait();
+    }
+
+    private boolean validarFormulario() {
+        StringBuilder erros = new StringBuilder();
+
+        boolean nomeInv = !ValidadorUtil.isTextoValido(txtNome.getText());
+        ValidadorUtil.marcarInvalido(txtNome, nomeInv);
+        if (nomeInv) erros.append("- Nome é obrigatório.\n");
+
+        boolean cpfInv = !ValidadorUtil.isCpfValido(txtCpf.getText());
+        ValidadorUtil.marcarInvalido(txtCpf, cpfInv);
+        if (cpfInv) erros.append("- CPF inválido (informe 11 dígitos).\n");
+
+        boolean telInv = !ValidadorUtil.isTextoValido(txtTelefone.getText());
+        ValidadorUtil.marcarInvalido(txtTelefone, telInv);
+        if (telInv) erros.append("- Telefone é obrigatório.\n");
+
+        boolean crmInv = !ValidadorUtil.isCrmValido(txtCrm.getText());
+        ValidadorUtil.marcarInvalido(txtCrm, crmInv);
+        if (crmInv) erros.append("- CRM inválido.\n");
+
+        boolean espInv = cbEspecialidade.getValue() == null;
+        ValidadorUtil.marcarInvalido(cbEspecialidade, espInv);
+        if (espInv) erros.append("- Selecione uma especialidade.\n");
+
+        if (!erros.isEmpty()) {
+            AlertaUtil.aviso("Corrija os campos destacados antes de salvar:\n\n" + erros);
+            return false;
+        }
+        return true;
     }
 }
