@@ -44,8 +44,8 @@ public class ConsultaServiceTest {
         consultas = new Memoria<>();
         medicos = new Memoria<>();
         pacientes = new Memoria<>();
-        paciente = new Paciente("Ana", "12345678900", "9999", LocalDate.of(2000, 1, 1), "Unimed");
-        medico = new Clinico("Bia", "98765432100", "9999", "123");
+        paciente = new Paciente("Ana", "52998224725", "9999", LocalDate.of(2000, 1, 1), "Unimed");
+        medico = new Clinico("Bia", "11144477735", "9999", "123");
         pacientes.cadastrar(paciente);
         medicos.cadastrar(medico);
         service = new ConsultaService(consultas, new PacienteService(pacientes), new MedicoService(medicos), 20);
@@ -61,7 +61,7 @@ public class ConsultaServiceTest {
         assertThrows(HorarioIndisponivelException.class,
                 () -> service.agendar(paciente.getCpf(), medico.getCrm(), horario, "Retorno"));
         assertEquals(1, consultas.listar().size());
-        Medico outro = new Pediatra("Caio", "11122233344", "9999", "456");
+        Medico outro = new Pediatra("Caio", "39053344705", "9999", "456");
         medicos.cadastrar(outro);
         service.agendar(paciente.getCpf(), outro.getCrm(), horario, "Rotina");
         assertEquals(2, consultas.listar().size());

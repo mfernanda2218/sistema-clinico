@@ -62,8 +62,8 @@ public class ConsultaRepositorioJsonTest {
         try {
             RepositorioTeste<Paciente> pacientes = new RepositorioTeste<>();
             RepositorioTeste<Medico> medicos = new RepositorioTeste<>();
-            Paciente paciente = new Paciente("Ana", "12345678900", "9999", LocalDate.of(2000, 1, 1));
-            Medico medico = new Clinico("Bia", "98765432100", "9999", "123");
+            Paciente paciente = new Paciente("Ana", "52998224725", "9999", LocalDate.of(2000, 1, 1));
+            Medico medico = new Clinico("Bia", "11144477735", "9999", "123");
             pacientes.cadastrar(paciente);
             medicos.cadastrar(medico);
             RepositorioComFalha repo = new RepositorioComFalha(arquivo.toString(), pacientes, medicos);
@@ -96,8 +96,8 @@ public class ConsultaRepositorioJsonTest {
         try {
             RepositorioTeste<Paciente> pacientes = new RepositorioTeste<>();
             RepositorioTeste<Medico> medicos = new RepositorioTeste<>();
-            Paciente paciente = new Paciente("Ana", "12345678900", "9999", LocalDate.of(2000, 1, 1));
-            Medico medico = new Clinico("Bia", "98765432100", "9999", "123");
+            Paciente paciente = new Paciente("Ana", "52998224725", "9999", LocalDate.of(2000, 1, 1));
+            Medico medico = new Clinico("Bia", "11144477735", "9999", "123");
             pacientes.cadastrar(paciente);
             medicos.cadastrar(medico);
             ConsultaRepositorioJson repo = new ConsultaRepositorioJson(arquivo.toString(), pacientes, medicos);
@@ -116,7 +116,7 @@ public class ConsultaRepositorioJsonTest {
             assertEquals(primeira.getId(), medico.getAgenda().get(novoHorario).getId());
             repo.carregar();
             assertEquals(novoHorario, service.buscarPorId(primeira.getId()).getDataHora());
-            assertEquals(2, service.listarPorPaciente("123.456.789-00").size());
+            assertEquals(2, service.listarPorPaciente("529.982.247-25").size());
             assertEquals(2, service.listarPorMedico("123").size());
             assertEquals(1, service.listarPorData(novoHorario.toLocalDate()).size());
             service.listar().clear();
@@ -140,8 +140,8 @@ public class ConsultaRepositorioJsonTest {
         try {
             RepositorioTeste<Paciente> pacientes = new RepositorioTeste<>();
             RepositorioTeste<Medico> medicos = new RepositorioTeste<>();
-            Paciente paciente = new Paciente("Ana", "12345678900", "9999", LocalDate.of(2000, 1, 1));
-            Medico medico = new Clinico("Bia", "98765432100", "9999", "123");
+            Paciente paciente = new Paciente("Ana", "52998224725", "9999", LocalDate.of(2000, 1, 1));
+            Medico medico = new Clinico("Bia", "11144477735", "9999", "123");
             pacientes.cadastrar(paciente);
             medicos.cadastrar(medico);
             LocalDateTime horario = LocalDateTime.now().plusDays(1).withNano(123456789);

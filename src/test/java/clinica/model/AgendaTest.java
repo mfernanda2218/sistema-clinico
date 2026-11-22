@@ -16,8 +16,8 @@ public class AgendaTest {
 
     @Before
     public void preparar() throws Exception {
-        medico = new Clinico("Ana", "12345678900", "9999", "123");
-        paciente = new Paciente("Bia", "98765432100", "9999", LocalDate.of(2000, 1, 1));
+        medico = new Clinico("Ana", "52998224725", "9999", "123");
+        paciente = new Paciente("Bia", "11144477735", "9999", LocalDate.of(2000, 1, 1));
         horario = LocalDateTime.now().plusDays(1);
         consulta = new Consulta(paciente, medico, horario, "Rotina", 150);
         medico.reservar(consulta);
@@ -53,7 +53,7 @@ public class AgendaTest {
 
     @Test
     public void rejeitaMedicoIncorretoETrocaComReserva() throws Exception {
-        Medico outro = new Pediatra("Caio", "11122233344", "9999", "456");
+        Medico outro = new Pediatra("Caio", "39053344705", "9999", "456");
         assertThrows(IllegalArgumentException.class, () -> outro.reservar(consulta));
         assertThrows(IllegalStateException.class, () -> consulta.setMedico(outro));
         assertSame(medico, consulta.getMedico());
@@ -66,9 +66,9 @@ public class AgendaTest {
 
     @Test
     public void preservaIdentificadores() throws Exception {
-        assertThrows(IllegalStateException.class, () -> paciente.setCpf("11122233344"));
+        assertThrows(IllegalStateException.class, () -> paciente.setCpf("39053344705"));
         assertThrows(IllegalStateException.class, () -> medico.setCrm("456"));
-        paciente.setCpf("987.654.321-00");
+        paciente.setCpf("111.444.777-35");
         medico.setCrm(" 123 ");
         assertEquals(paciente.getCpf(), consulta.getCpfPaciente());
         assertEquals(medico.getCrm(), consulta.getCrmMedico());
