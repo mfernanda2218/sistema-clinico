@@ -54,4 +54,12 @@ public final class AlertaUtil {
         }
         return mensagem;
     }
+
+public static void marcarInvalido(javafx.scene.control.Control campo, boolean invalido) {
+    if (invalido) {
+        campo.setStyle("-fx-border-color: #d32f2f; -fx-border-width: 1.5px; -fx-border-radius: 3px;");
+    } else {
+        campo.setStyle(null);
+    }
+}
 }
