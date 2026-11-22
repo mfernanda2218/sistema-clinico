@@ -19,7 +19,7 @@ public abstract class Medico extends Pessoa implements Agendavel {
 
     public void setCrm(String crm) throws MedicoNaoEncontradoException {
         if (crm == null || crm.isBlank()) {
-            throw new MedicoNaoEncontradoException("CRM não encontrado ou inválido.");
+            throw new IllegalArgumentException("CRM não pode ser vazio.");
         }
         String crmLimpo = crm.trim();
         if (this.crm != null && !this.crm.equals(crmLimpo)) {
@@ -64,6 +64,18 @@ public abstract class Medico extends Pessoa implements Agendavel {
             throw new IllegalArgumentException("Horário é obrigatório.");
         }
         agenda.remove(horario);
+    }
+
+    public void registrarReserva(Consulta consulta) {
+        if (consulta == null || consulta.getMedico() != this) {
+            throw new IllegalArgumentException("A consulta deve pertencer a este médico.");
+        }
+        agenda.values().removeIf(c -> c.getId().equals(consulta.getId()));
+        agenda.put(consulta.getDataHora(), consulta);
+    }
+
+    public void limparAgenda() {
+        agenda.clear();
     }
 
     public boolean possuiReserva(Consulta consulta) {

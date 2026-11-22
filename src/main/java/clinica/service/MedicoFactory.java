@@ -28,6 +28,8 @@ public class MedicoFactory {
 			
 			case "clinico":
 			case "clínico":
+			case "clinico geral":
+			case "clínico geral":
 				return new Clinico(nome, cpf, telefone, crm);
 				
 			default:

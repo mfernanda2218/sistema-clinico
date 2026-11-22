@@ -15,7 +15,9 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ConsultaRepositorioJson implements Repositorio<Consulta> {
     private final Path arquivo;
@@ -174,6 +176,16 @@ public class ConsultaRepositorioJson implements Repositorio<Consulta> {
         }
         consultas.clear();
         consultas.addAll(carregadas);
+        Set<Medico> medicosCarregados = new LinkedHashSet<>();
+        for (Consulta consulta : carregadas) {
+            medicosCarregados.add(consulta.getMedico());
+        }
+        for (Medico medico : medicosCarregados) {
+            medico.limparAgenda();
+        }
+        for (Consulta consulta : carregadas) {
+            consulta.getMedico().registrarReserva(consulta);
+        }
     }
 
     @Override

@@ -33,14 +33,38 @@ public abstract class Pessoa {
         this.nome = nome.trim();
     }
 
+    public static boolean cpfValido(String cpf) {
+        if (cpf == null) {
+            return false;
+        }
+        String digitos = cpf.replaceAll("\\D", "");
+        if (digitos.length() != 11 || digitos.chars().distinct().count() == 1) {
+            return false;
+        }
+        for (int i = 9; i < 11; i++) {
+            int soma = 0;
+            for (int j = 0; j < i; j++) {
+                soma += (digitos.charAt(j) - '0') * (i + 1 - j);
+            }
+            int digito = (soma * 10) % 11;
+            if (digito == 10) {
+                digito = 0;
+            }
+            if (digito != digitos.charAt(i) - '0') {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public void setCpf(String cpf) {
         if (cpf == null || cpf.isBlank()) {
             throw new IllegalArgumentException("CPF não pode ser vazio.");
         }
         // Remove caracteres não numéricos
         String cpfLimpo = cpf.replaceAll("\\D", "");
-        if (cpfLimpo.length() != 11) {
-            throw new IllegalArgumentException("CPF deve conter 11 dígitos.");
+        if (!cpfValido(cpfLimpo)) {
+            throw new IllegalArgumentException("CPF inválido: informe 11 dígitos com dígitos verificadores corretos.");
         }
         if (this.cpf != null && !this.cpf.equals(cpfLimpo)) {
             throw new IllegalStateException("CPF não pode ser alterado após o cadastro.");

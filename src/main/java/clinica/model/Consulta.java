@@ -43,6 +43,16 @@ public class Consulta implements Cobravel {
         return id;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof Consulta outra && id.equals(outra.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id.hashCode();
+    }
+
     public Consulta copiarParaHorario(LocalDateTime novoHorario) throws HorarioIndisponivelException {
         return new Consulta(id, paciente, medico, novoHorario, tipo, valorBase, estrategia);
     }
