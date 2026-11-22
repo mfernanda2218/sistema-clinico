@@ -37,6 +37,8 @@ public class ConsultaView extends BorderPane {
         this.consultas = consultas;
         this.pacientes = pacientes;
         this.medicos = medicos;
+        paciente.setId("pacienteConsulta");
+        medico.setId("medicoConsulta");
         setPadding(new Insets(15));
         paciente.setConverter(conversor(p -> p.getNome() + " — " + p.getCpf()));
         medico.setConverter(conversor(m -> m.getNome() + " — CRM " + m.getCrm()));
@@ -119,8 +121,22 @@ public class ConsultaView extends BorderPane {
 
     public void atualizar() {
         try {
+            Paciente pacienteAnterior = paciente.getValue();
+            Medico medicoAnterior = medico.getValue();
             paciente.getItems().setAll(pacientes.listar());
             medico.getItems().setAll(medicos.listar());
+            paciente.setValue(null);
+            medico.setValue(null);
+            for (Paciente item : paciente.getItems()) {
+                if (pacienteAnterior != null && item.getCpf().equals(pacienteAnterior.getCpf())) {
+                    paciente.setValue(item);
+                }
+            }
+            for (Medico item : medico.getItems()) {
+                if (medicoAnterior != null && item.getCrm().equals(medicoAnterior.getCrm())) {
+                    medico.setValue(item);
+                }
+            }
             var lista = consultas.listar();
             lista.sort(Comparator.comparing(Consulta::getDataHora));
             tabela.getItems().setAll(lista);
