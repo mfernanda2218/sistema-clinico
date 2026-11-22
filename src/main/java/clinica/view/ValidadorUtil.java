@@ -4,7 +4,6 @@ import java.time.LocalDate;
 
 public final class ValidadorUtil {
 
-   
     public static final String REGEX_CPF = "\\d{11}|\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}";
     public static final String REGEX_CRM = "\\d{4,6}(-[A-Z]{2})?";
     public static final String REGEX_HORA = "([01]\\d|2[0-3]):[0-5]\\d";
