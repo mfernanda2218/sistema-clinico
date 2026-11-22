@@ -1,6 +1,7 @@
 package clinica.view;
 
 import clinica.exception.MedicoNaoEncontradoException;
+import clinica.exception.AlertaUtil;
 import clinica.model.Medico;
 import clinica.service.MedicoService;
 import javafx.collections.FXCollections;
