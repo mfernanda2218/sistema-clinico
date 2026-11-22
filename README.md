@@ -54,6 +54,29 @@ O demo cadastra um paciente e um médico, agenda consultas, cancela uma e simula
 
 > **Atenção:** o demo falha com `Paciente com CPF já cadastrado` se a pasta `dados/` já contiver esses registros. Apague `dados/` antes de rodar novamente, ou use os CPFs já cadastrados.
 
+### Gerar uma distribuição portátil (jlink)
+
+O app é modularizado (`module-info.java`, módulo `clinica.app`). Para gerar uma imagem de runtime autocontida — com JRE enxuto + JavaFX embutidos, sem precisar de Java instalado na máquina de destino:
+
+```bash
+mvn clean javafx:jlink
+```
+
+Saída em **`target/image/`** (~100 MB, específico para Windows x64):
+
+```
+target/image/
+├── bin/
+│   ├── sistema-clinico.bat   # launcher Windows
+│   ├── sistema-clinico       # launcher Linux/macOS
+│   └── java.exe / javaw.exe  # runtime Java embutido
+└── lib/                      # JRE + módulos JavaFX + app
+```
+
+Para distribuir: copie a pasta `target/image/` inteira para a máquina de destino e execute `bin/sistema-clinico.bat`. A pasta `dados/` será criada ao lado de onde o `.bat` for executado.
+
+> **Observação:** jlink gera imagem por plataforma — para Linux/macOS é preciso rodar o build naquela plataforma. Um único `.jar` universal não é viável para JavaFX (o runtime exige os módulos JavaFX no module path; um uber-jar via shade falha com "JavaFX runtime components are missing"). `mvn package` continua gerando o jar comum (`target/sistema-clinico-1.0-SNAPSHOT.jar`) para uso com JDK instalado.
+
 ---
 
 ## 2. Onde ficam os dados (JSONs)
