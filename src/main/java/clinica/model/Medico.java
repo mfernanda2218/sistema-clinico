@@ -117,7 +117,7 @@ public abstract class Medico extends Pessoa implements Agendavel {
         agenda.put(novoHorario, consulta);
     }
 
-    // Novo: útil caso você altere a duração de uma consulta já agendada via consulta.setDuracao(...)
+  
     public void atualizarDuracao(Consulta consulta, Duration novaDuracao) throws HorarioIndisponivelException {
         if (!possuiReserva(consulta)) {
             return;
