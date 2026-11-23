@@ -148,7 +148,8 @@ public class PacienteRepositorioJson implements Repositorio<Paciente> {
                             || !Paciente.telefoneValido(p.getTelefone())) {
                         throw new ArquivoInvalidoException("Arquivo de pacientes contém paciente sem nome ou telefone válido: " + p.getCpf());
                     }
-                    if (p.getDataNascimento() == null || p.getDataNascimento().isAfter(LocalDate.now())) {
+                    if (p.getDataNascimento() == null || p.getDataNascimento().isAfter(LocalDate.now())
+                            || p.getDataNascimento().isBefore(LocalDate.of(1900, 1, 1))) {
                         throw new ArquivoInvalidoException("Arquivo de pacientes contém data de nascimento inválida: " + p.getCpf());
                     }
                     if (!Paciente.convenioValido(p.getConvenio())) {

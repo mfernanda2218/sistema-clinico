@@ -45,8 +45,9 @@ public class Paciente extends Pessoa {
         if (dataNascimento == null) {
             throw new IllegalArgumentException("Data de nascimento não pode ser nula.");
         }
-        if (dataNascimento.isAfter(LocalDate.now())) {
-            throw new IllegalArgumentException("Data de nascimento não pode ser futura.");
+        if (dataNascimento.isAfter(LocalDate.now())
+                || dataNascimento.isBefore(LocalDate.of(1900, 1, 1))) {
+            throw new IllegalArgumentException("Data de nascimento inválida.");
         }
         this.dataNascimento = dataNascimento;
     }

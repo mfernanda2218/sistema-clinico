@@ -352,7 +352,7 @@ public class PacienteView extends BorderPane {
 
     boolean nascInv = !ValidadorUtil.isDataNascimentoValida(dpNascimento.getValue());
     ValidadorUtil.marcarInvalido(dpNascimento, nascInv);
-    if (nascInv) erros.append("- Data de nascimento obrigatória e não pode ser futura.\n");
+    if (nascInv) erros.append("- Data de nascimento obrigatória e deve ser uma data válida (não futura, não anterior a 1900).\n");
 
     if (!erros.isEmpty()) {
         AlertaUtil.aviso("Corrija os campos destacados antes de salvar:\n\n" + erros);

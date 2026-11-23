@@ -29,7 +29,8 @@ public final class ValidadorUtil {
     }
 
     public static boolean isDataNascimentoValida(LocalDate data) {
-        return data != null && !data.isAfter(LocalDate.now());
+        return data != null && !data.isAfter(LocalDate.now())
+                && !data.isBefore(LocalDate.of(1900, 1, 1));
     }
 
     public static boolean isDataAgendamentoValida(LocalDate data) {
