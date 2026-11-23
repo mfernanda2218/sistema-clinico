@@ -62,13 +62,16 @@ public class Consulta implements Cobravel {
         return duracaoMinutos >= 30 ? Duration.ofMinutes(duracaoMinutos) : DURACAO_MINIMA;
     }
 
-    public void setDuracao(Duration duracao) {
-        if (duracao == null || duracao.compareTo(DURACAO_MINIMA) < 0) {
-            throw new IllegalArgumentException("A duração mínima da consulta é de 30 minutos.");
-        }
-        this.duracaoMinutos = duracao.toMinutes();
+   public void setDuracao(Duration duracao) throws HorarioIndisponivelException {
+    if (duracao == null || duracao.compareTo(DURACAO_MINIMA) < 0) {
+        throw new IllegalArgumentException("A duração mínima da consulta é de 30 minutos.");
     }
-
+    if (medico != null && medico.possuiReserva(this)) {
+        medico.atualizarDuracao(this, duracao);
+    }
+    this.duracaoMinutos = duracao.toMinutes();
+}
+    
     public LocalDateTime getDataHoraFim() {
         return dataHora.plus(getDuracao());
     }
