@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class Consulta implements Cobravel {
+    public static final Duration DURACAO_MINIMA = Duration.ofMinutes(30);
+    
     private final String id;
     private transient Paciente paciente;
     private transient Medico medico;
@@ -16,11 +18,17 @@ public class Consulta implements Cobravel {
     private String tipo;
     private double valorBase;
     private String formaCobranca;
+    private Duration duracao;
     private transient EstrategiaPreco estrategia;
+    
 
     public Consulta(Paciente paciente, Medico medico, LocalDateTime dataHora,
                     String tipo, double valorBase) throws HorarioIndisponivelException {
-        this(paciente, medico, dataHora, tipo, valorBase, new PrecoParticular());
+        this(paciente, medico, dataHora, tipo, valorBase, DURACAO_MINIMA, new PrecoParticular());
+    }
+    public Consulta(Paciente paciente, Medico medico, LocalDateTime dataHora,
+                    String tipo, double valorBase, EstrategiaPreco estrategia) throws HorarioIndisponivelException {
+        this(paciente, medico, dataHora, DURACAO_MINIMA, tipo, valorBase, estrategia);
     }
 
     public Consulta(Paciente paciente, Medico medico, LocalDateTime dataHora,
@@ -29,7 +37,7 @@ public class Consulta implements Cobravel {
     }
 
     private Consulta(String id, Paciente paciente, Medico medico, LocalDateTime dataHora,
-                     String tipo, double valorBase, EstrategiaPreco estrategia) throws HorarioIndisponivelException {
+                     String tipo, double valorBase, EstrategiaPreco estrategia, ) throws HorarioIndisponivelException {
         this.id = id;
     	setPaciente(paciente);
     	setDataHora(dataHora);   
@@ -37,6 +45,7 @@ public class Consulta implements Cobravel {
     	setTipo(tipo);
     	setValorBase(valorBase);
     	setEstrategia(estrategia);
+        etDuracao(duracao);
     }
 
     public String getId() {
@@ -53,10 +62,16 @@ public class Consulta implements Cobravel {
         return id.hashCode();
     }
 
-    public Consulta copiarParaHorario(LocalDateTime novoHorario) throws HorarioIndisponivelException {
-        return new Consulta(id, paciente, medico, novoHorario, tipo, valorBase, estrategia);
+   public void setDuracao(Duration duracao) {
+        if (duracao == null || duracao.compareTo(DURACAO_MINIMA) < 0) {
+            throw new IllegalArgumentException("A duração mínima da consulta é de 30 minutos.");
+        }
+        this.duracao = duracao;
     }
-
+    
+    public LocalDateTime getDataHoraFim() {
+        return dataHora.plus(duracao);
+    }
     public Paciente getPaciente() {
         return paciente;
     }
