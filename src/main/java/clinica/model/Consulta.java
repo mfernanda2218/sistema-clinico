@@ -18,17 +18,13 @@ public class Consulta implements Cobravel {
     private String tipo;
     private double valorBase;
     private String formaCobranca;
-    private Duration duracao;
+    private long duracaoMinutos = 30;
     private transient EstrategiaPreco estrategia;
     
 
     public Consulta(Paciente paciente, Medico medico, LocalDateTime dataHora,
                     String tipo, double valorBase) throws HorarioIndisponivelException {
-        this(paciente, medico, dataHora, tipo, valorBase, DURACAO_MINIMA, new PrecoParticular());
-    }
-    public Consulta(Paciente paciente, Medico medico, LocalDateTime dataHora,
-                    String tipo, double valorBase, EstrategiaPreco estrategia) throws HorarioIndisponivelException {
-        this(paciente, medico, dataHora, DURACAO_MINIMA, tipo, valorBase, estrategia);
+        this(paciente, medico, dataHora, tipo, valorBase, new PrecoParticular());
     }
 
     public Consulta(Paciente paciente, Medico medico, LocalDateTime dataHora,
@@ -62,13 +58,21 @@ public class Consulta implements Cobravel {
         return id.hashCode();
     }
 
-   public void setDuracao(Duration duracao) {
+  public Duration getDuracao() {
+        return duracaoMinutos >= 30 ? Duration.ofMinutes(duracaoMinutos) : DURACAO_MINIMA;
+    }
+
+    public void setDuracao(Duration duracao) {
         if (duracao == null || duracao.compareTo(DURACAO_MINIMA) < 0) {
             throw new IllegalArgumentException("A duração mínima da consulta é de 30 minutos.");
         }
-        this.duracao = duracao;
+        this.duracaoMinutos = duracao.toMinutes();
     }
-    
+
+    public LocalDateTime getDataHoraFim() {
+        return dataHora.plus(getDuracao());
+    }
+
     public LocalDateTime getDataHoraFim() {
         return dataHora.plus(duracao);
     }
