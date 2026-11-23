@@ -38,6 +38,10 @@ public class Paciente extends Pessoa {
         return convenio;
     }
 
+    public static List<String> getConveniosAceitos() {
+        return CONVENIOS_ACEITOS;
+    }
+
     public boolean isParticular() {
         return convenio == null;
     }

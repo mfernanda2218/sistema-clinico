@@ -29,7 +29,7 @@ public class PacienteView extends BorderPane {
     private TextField txtCpf;
     private TextField txtTelefone;
     private DatePicker dpNascimento;
-    private TextField txtConvenio;
+    private ComboBox<String> cbConvenio;
     private TableView<Paciente> tabela;
 
     private Paciente pacienteSelecionado;
@@ -53,8 +53,10 @@ public class PacienteView extends BorderPane {
         txtCpf = new TextField();
         txtTelefone = new TextField();
         dpNascimento = new DatePicker();
-        txtConvenio = new TextField();
-        txtConvenio.setPromptText("Deixe vazio se particular");
+        cbConvenio = new ComboBox<>();
+        cbConvenio.getItems().add("Particular");
+        cbConvenio.getItems().addAll(Paciente.getConveniosAceitos());
+        cbConvenio.setValue("Particular");
 
         form.add(new Label("Nome:"), 0, 0);
         form.add(txtNome, 1, 0);
@@ -65,7 +67,7 @@ public class PacienteView extends BorderPane {
         form.add(new Label("Nascimento:"), 0, 3);
         form.add(dpNascimento, 1, 3);
         form.add(new Label("Convênio:"), 0, 4);
-        form.add(txtConvenio, 1, 4);
+        form.add(cbConvenio, 1, 4);
 
         // Botões
         HBox botoes = new HBox(10);
@@ -148,8 +150,8 @@ public class PacienteView extends BorderPane {
             String cpf = txtCpf.getText();
             String telefone = txtTelefone.getText();
             LocalDate nascimento = dpNascimento.getValue();
-            String convenio = txtConvenio.getText();
-            if (convenio != null && convenio.isBlank()) {
+            String convenio = cbConvenio.getValue();
+            if ("Particular".equals(convenio)) {
                 convenio = null;
             }
 
@@ -320,7 +322,7 @@ public class PacienteView extends BorderPane {
         txtCpf.setText(p.getCpf());
         txtTelefone.setText(p.getTelefone());
         dpNascimento.setValue(p.getDataNascimento());
-        txtConvenio.setText(p.isParticular() ? "" : p.getConvenio());
+        cbConvenio.setValue(p.isParticular() ? "Particular" : p.getConvenio());
         txtCpf.setDisable(true);
     }
 
@@ -329,7 +331,7 @@ public class PacienteView extends BorderPane {
         txtCpf.clear();
         txtTelefone.clear();
         dpNascimento.setValue(null);
-        txtConvenio.clear();
+        cbConvenio.setValue("Particular");
         txtCpf.setDisable(false);
         pacienteSelecionado = null;
         tabela.getSelectionModel().clearSelection();
