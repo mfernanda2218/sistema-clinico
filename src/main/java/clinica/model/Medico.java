@@ -114,4 +114,22 @@ public abstract class Medico extends Pessoa implements Agendavel {
         return String.format("Médico: %s | CRM: %s | Especialidade: %s",
                 getNome(), crm, getEspecialidade());
     }
+
+    public boolean temConflito(Consulta novaConsulta) {
+    LocalDateTime inicioNovo = novaConsulta.getDataHora();
+    LocalDateTime fimNovo = novaConsulta.getDataHoraFim();
+}
+    for (Consulta existente : this.agenda) {
+    if (existente.getId().equals(novaConsulta.getId())) {
+            continue;
+      }
+    LocalDateTime inicioExistente = existente.getDataHora();
+        LocalDateTime fimExistente = existente.getDataHoraFim();
+    boolean sobrepoe = inicioNovo.isBefore(fimExistente) && fimNovo.isAfter(inicioExistente);
+        if (sobrepoe) {
+            return true;
+        }
+    }
+    return false;
+} 
 }
