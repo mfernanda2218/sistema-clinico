@@ -2,6 +2,7 @@ package clinica.model;
 
 import clinica.interfaces.Agendavel;
 import clinica.exception.HorarioIndisponivelException;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Locale;
 import java.util.TreeMap;
@@ -49,10 +50,17 @@ public abstract class Medico extends Pessoa implements Agendavel {
 
     @Override
     public boolean estaDisponivel(LocalDateTime horario) {
-        if (horario == null) {
+        return estaDisponivel(horario, Consulta.DURACAO_MINIMA);
+    }
+
+    public boolean estaDisponivel(LocalDateTime inicio, Duration duracao) {
+        if (inicio == null) {
             throw new IllegalArgumentException("Horário é obrigatório.");
         }
-        return !agenda.containsKey(horario);
+        if (duracao == null || duracao.compareTo(Consulta.DURACAO_MINIMA) < 0) {
+            throw new IllegalArgumentException("A duração mínima da consulta é de 30 minutos.");
+        }
+        return !possuiConflitoNoIntervalo(inicio, inicio.plus(duracao), null);
     }
 
     @Override
@@ -64,8 +72,10 @@ public abstract class Medico extends Pessoa implements Agendavel {
         if (horario == null || !horario.isAfter(LocalDateTime.now())) {
             throw new IllegalArgumentException("Horário deve estar no futuro.");
         }
-        if (!estaDisponivel(horario)) {
-            throw new HorarioIndisponivelException("Médico " + getNome() + " (CRM " + crm + ") já possui consulta no horário " + horario);
+        if (temConflito(consulta)) {
+            throw new HorarioIndisponivelException(
+                    "Médico " + getNome() + " (CRM " + crm + ") já possui consulta conflitante no intervalo de "
+                            + horario + " até " + consulta.getDataHoraFim());
         }
         agenda.put(horario, consulta);
     }
@@ -97,12 +107,26 @@ public abstract class Medico extends Pessoa implements Agendavel {
         if (!possuiReserva(consulta)) {
             return;
         }
-        Consulta consultaNoHorario = agenda.get(novoHorario);
-        if (consultaNoHorario != null && consultaNoHorario != consulta) {
-            throw new HorarioIndisponivelException("Médico " + getNome() + " (CRM " + crm + ") já possui consulta no horário " + novoHorario);
+        LocalDateTime novoFim = novoHorario.plus(consulta.getDuracao());
+        if (possuiConflitoNoIntervalo(novoHorario, novoFim, consulta.getId())) {
+            throw new HorarioIndisponivelException(
+                    "Médico " + getNome() + " (CRM " + crm + ") já possui consulta conflitante no intervalo de "
+                            + novoHorario + " até " + novoFim);
         }
         agenda.remove(consulta.getDataHora());
         agenda.put(novoHorario, consulta);
+    }
+
+    // Novo: útil caso você altere a duração de uma consulta já agendada via consulta.setDuracao(...)
+    public void atualizarDuracao(Consulta consulta, Duration novaDuracao) throws HorarioIndisponivelException {
+        if (!possuiReserva(consulta)) {
+            return;
+        }
+        LocalDateTime novoFim = consulta.getDataHora().plus(novaDuracao);
+        if (possuiConflitoNoIntervalo(consulta.getDataHora(), novoFim, consulta.getId())) {
+            throw new HorarioIndisponivelException(
+                    "Não é possível estender a duração: há outra consulta agendada antes de " + novoFim);
+        }
     }
 
     public TreeMap<LocalDateTime, Consulta> getAgenda() {
@@ -116,20 +140,9 @@ public abstract class Medico extends Pessoa implements Agendavel {
     }
 
     public boolean temConflito(Consulta novaConsulta) {
-    LocalDateTime inicioNovo = novaConsulta.getDataHora();
-    LocalDateTime fimNovo = novaConsulta.getDataHoraFim();
-}
-    for (Consulta existente : this.agenda) {
-    if (existente.getId().equals(novaConsulta.getId())) {
-            continue;
-      }
-    LocalDateTime inicioExistente = existente.getDataHora();
-        LocalDateTime fimExistente = existente.getDataHoraFim();
-    boolean sobrepoe = inicioNovo.isBefore(fimExistente) && fimNovo.isAfter(inicioExistente);
-        if (sobrepoe) {
-            return true;
-        }
+        return possuiConflitoNoIntervalo(
+                novaConsulta.getDataHora(),
+                novaConsulta.getDataHoraFim(),
+                novaConsulta.getId()
+        );
     }
-    return false;
-} 
-}
