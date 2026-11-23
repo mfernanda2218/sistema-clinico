@@ -32,7 +32,7 @@ public class PacienteView extends BorderPane {
     private TextField txtConvenio;
     private TableView<Paciente> tabela;
 
-    private Paciente pacienteSelecionado; // null = modo Novo
+    private Paciente pacienteSelecionado;
 
     public PacienteView(PacienteService service) {
         this.service = service;
@@ -278,7 +278,6 @@ public class PacienteView extends BorderPane {
             try {
                 Registro reg = new Registro(LocalDate.now(), desc, txtObservacoes.getText());
                 selecionado.getProntuario().adicionarRegistro(reg);
-                // Se o service tiver método para persistir o prontuário, chame-o aqui
                 service.atualizar(selecionado); // garante persistência
                 atualizarListaRegistros(listaRegistros, selecionado);
                 txtDescricao.clear();
@@ -314,7 +313,7 @@ public class PacienteView extends BorderPane {
         }
     }
 
-    // ==================== UTILITÁRIOS ====================
+    // UTILITÁRIOS 
 
     private void preencherFormulario(Paciente p) {
         txtNome.setText(p.getNome());
